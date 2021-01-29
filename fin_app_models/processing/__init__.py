@@ -1,2 +1,3 @@
 from .base_processing import IStructuredDataProcessing
 from .default_processing import DefaultStructuredDataProcessing
+from .linear_regression import DefaultTrendLinearRegressionProcessing

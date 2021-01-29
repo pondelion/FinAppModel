@@ -5,8 +5,11 @@ import pandas as pd
 import numpy as np
 from overrides import overrides
 
-from .base_model import BaseRegressionModel
-from ...entity.timeseries_data import TimeseriesData
+from ..base_model import BaseRegressionModel
+from ...processing import (
+    IStructuredDataProcessing,
+    DefaultTrendLinearRegressionProcessing
+)
 
 
 class TrendLinearRegression(BaseRegressionModel):
@@ -14,33 +17,44 @@ class TrendLinearRegression(BaseRegressionModel):
     
     Example:
     >>> tlr_model = TrendLinearRegression()
-    >>> tlr_model.train(y_train=sr_ts, trend_interval=365*3)
+    >>> tlr_model.train(y_train=sr_ts, trend_interval_days=365*3)
     >>> sr_pred = tlr_model.predict(pred_days=900)
     """
+
+    def __init__(
+        self,
+        data_processors: IStructuredDataProcessing = [DefaultTrendLinearRegressionProcessing()]
+    ):
+        super(TrendLinearRegression, self).__init__(data_processors)
 
     @overrides
     def _train(
         self,
         y_train: pd.Series,
-        trend_interval: timedelta = None,
+        X_train: Union[pd.DataFrame, pd.Series] = None,
         dt_now: datetime = None,
-    ) -> float:
-
-        ts_y_train = TimeseriesData(y_train)()
+        **kwargs,
+    ) -> None:
 
         if dt_now is None:
-            dt_now = ts_y_train.index.max()
-        if trend_interval is None:
-            trend_interval = dt_now - ts_y_train.index.min()
+            dt_now = y_train.index.max()
+        if 'trend_interval_days' not in kwargs:
+            kwargs['trend_interval_days'] = (dt_now - y_train.index.min()).days
 
         self._dt_now = dt_now
 
         self._slope, self._intercept = self._calc_reg_coeffs(
-            ts_y_train, trend_interval, dt_now
+            y_train, kwargs['trend_interval_days'], dt_now
         )
 
     @overrides
-    def _predict(self, pred_days: int = 30) -> pd.Series:
+    def _predict(
+        self,
+        y: pd.Series = None,
+        X: Union[pd.DataFrame, pd.Series] = None,
+        pred_days: int = 30,
+        **kwargs,
+    ) -> pd.Series:
         dts = pd.date_range(self._dt_now, self._dt_now+timedelta(days=pred_days))
 
         xs = np.arange(len(dts))
