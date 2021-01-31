@@ -33,7 +33,7 @@ class BaseRegressionModel(metaclass=ABCMeta):
         dt_now: datetime = None,
         model_params: Dict = {},
         auto_param_tuning: bool = True,
-        **kwargs: Dict,
+        **kwargs,
     ) -> None:
         X_train_preprocessed = X_train.copy() if X_train is not None else None
         y_train_preprocessed = y_train.copy()
@@ -53,7 +53,7 @@ class BaseRegressionModel(metaclass=ABCMeta):
             y_train=y_train_preprocessed,
             X_train=X_train_preprocessed,
             dt_now=dt_now,
-            model_params=self._best_params
+            model_params=self._best_params,
             **kwargs
         )
 
@@ -62,10 +62,10 @@ class BaseRegressionModel(metaclass=ABCMeta):
         y: pd.Series = None,
         X: Union[pd.DataFrame, pd.Series] = None,
         pred_days: int = 30,
-        **kwargs: Dict,
+        **kwargs,
     ) -> pd.Series:
-        X_preprocessed = X.copy()
-        y_preprocessed = y.copy()
+        X_preprocessed = X.copy() if X is not None else None
+        y_preprocessed = y.copy() if y is not None else None
         for dp in self._data_processors:
             X_preprocessed, y_preprocessed = dp.preprocess_cols(
                 X_preprocessed, y_preprocessed
@@ -73,7 +73,7 @@ class BaseRegressionModel(metaclass=ABCMeta):
         sr_pred = self._predict(
             y=y_preprocessed,
             X=X_preprocessed,
-            pred_days=pred_days
+            pred_days=pred_days,
             **kwargs
         )
         for dp in self._data_processors[::-1]:
@@ -87,7 +87,7 @@ class BaseRegressionModel(metaclass=ABCMeta):
         X_train: Union[pd.DataFrame, pd.Series] = None,
         dt_now: datetime = None,
         model_params: Dict = {},
-        **kwargs: Dict,
+        **kwargs,
     ) -> None:
         raise NotImplementedError
     
@@ -97,7 +97,7 @@ class BaseRegressionModel(metaclass=ABCMeta):
         y: pd.Series = None,
         X: Union[pd.DataFrame, pd.Series] = None,
         pred_days: int = 30,
-        **kwargs: Dict,
+        **kwargs,
     ) -> pd.Series:
         raise NotImplementedError
 

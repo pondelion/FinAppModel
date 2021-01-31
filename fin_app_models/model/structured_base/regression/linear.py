@@ -6,7 +6,7 @@ import numpy as np
 from overrides import overrides
 
 from ..base_model import BaseRegressionModel
-from ...processing import (
+from ....processing import (
     IStructuredDataProcessing,
     DefaultTrendLinearRegressionProcessing
 )
@@ -44,7 +44,7 @@ class TrendLinearRegression(BaseRegressionModel):
         self._dt_now = dt_now
 
         self._slope, self._intercept = self._calc_reg_coeffs(
-            y_train, kwargs['trend_interval_days'], dt_now
+            y_train, timedelta(days=int(kwargs['trend_interval_days'])), dt_now
         )
 
     @overrides
@@ -83,8 +83,12 @@ class TrendLinearRegression(BaseRegressionModel):
 
 
 class SimpleLinearRegression(BaseRegressionModel):
-    raise NotImplementedError
+
+    def __init__(self):
+        raise NotImplementedError
 
 
 class MultipleLinearRegression(BaseRegressionModel):
-    raise NotImplementedError
+
+    def __init__(self):
+        raise NotImplementedError

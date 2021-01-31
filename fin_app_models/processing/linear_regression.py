@@ -15,7 +15,7 @@ class DefaultTrendLinearRegressionProcessing(IStructuredDataProcessing):
         X_train: Union[pd.DataFrame, pd.Series],
         y_train: pd.Series
     ) -> Tuple[Union[pd.DataFrame, pd.Series], pd.Series]:
-        ts_y_train = TimeseriesData(y_train)()
+        ts_y_train = TimeseriesData(y_train)() if y_train is not None else None
         return (X_train, ts_y_train)
 
     @overrides
