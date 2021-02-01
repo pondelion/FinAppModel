@@ -1,0 +1,56 @@
+import logging
+from datetime import datetime
+import os
+
+import yaml
+
+
+formatter = '%(levelname)s : %(asctime)s : %(message)s'
+logging.basicConfig(format=formatter)
+
+os.makedirs('log', exist_ok=True)
+filename = os.path.join(
+    'log',
+    f'{datetime.now().strftime("%Y%m%d_%H%M%S")}.log',
+)
+file_handler = logging.FileHandler(
+    filename=filename
+)
+file_handler.setFormatter(logging.Formatter(formatter))
+
+LOG_NAME = 'fin_app_model'
+
+
+class Logger:
+
+    @staticmethod
+    def d(tag: str, message: str):
+        """debug log"""
+        logger = logging.getLogger(LOG_NAME)
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
+        logger.debug('[%s] %s', tag, message)
+
+    @staticmethod
+    def i(tag: str, message: str):
+        """infomation log"""
+        logger = logging.getLogger(LOG_NAME)
+        logger.setLevel(logging.INFO)
+        logger.addHandler(file_handler)
+        logger.info('[%s] %s', tag, message)
+
+    @staticmethod
+    def e(tag: str, message: str):
+        """error log"""
+        logger = logging.getLogger(LOG_NAME)
+        logger.setLevel(logging.ERROR)
+        logger.addHandler(file_handler)
+        logger.error('[%s] %s', tag, message)
+
+    @staticmethod
+    def w(tag: str, message: str):
+        """warning log"""
+        logger = logging.getLogger(LOG_NAME)
+        logger.setLevel(logging.WARNING)
+        logger.addHandler(file_handler)
+        logger.warn('[%s] %s', tag, message)

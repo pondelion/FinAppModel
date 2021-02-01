@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 from datetime import datetime
-from typing import Union, Dict
+from typing import Union, Dict, List
 
 import pandas as pd
 
@@ -14,13 +14,14 @@ from ...param_tuning import (
     DefaultTuner
 )
 from ...entity.timeseries_data import TimeseriesData
+from ...utils import Logger
 
 
 class BaseRegressionModel(metaclass=ABCMeta):
 
     def __init__(
         self,
-        data_processors: IStructuredDataProcessing = [DefaultStructuredDataProcessing()],
+        data_processors: List[IStructuredDataProcessing] = [DefaultStructuredDataProcessing()],
         param_tuner: IParamTuber = DefaultTuner(),
     ):
         self._data_processors = data_processors
@@ -37,15 +38,27 @@ class BaseRegressionModel(metaclass=ABCMeta):
     ) -> None:
         X_train_preprocessed = X_train.copy() if X_train is not None else None
         y_train_preprocessed = y_train.copy()
+
+        if dt_now is not None:
+            X_train_preprocessed = X_train_preprocessed[
+                X_train_preprocessed.index <= dt_now
+            ] if X_train is not None else None
+            y_train_preprocessed = y_train_preprocessed[
+                y_train_preprocessed.index <= dt_now
+            ]
+
         for dp in self._data_processors:
             X_train_preprocessed, y_train_preprocessed = dp.preprocess_cols(
                 X_train_preprocessed, y_train_preprocessed
             )
 
         if auto_param_tuning:
+            Logger.d(self.__class__.__name__, 'Start tuning parameters')
             self._best_params = self._param_tuner.param_tuning(
                 X_train_preprocessed, y_train_preprocessed, dt_now, 
             )
+            Logger.d(self.__class__.__name__, 'Done tuning parameters')
+            Logger.d(self.__class__.__name__, f'best_pramas : {self._best_params}')
         else:
             self._best_params = model_params
 

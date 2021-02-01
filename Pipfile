@@ -9,6 +9,8 @@ pytest = "*"
 [packages]
 pandas = "*"
 overrides = "*"
+sklearn = "*"
+optuna = "*"
 
 [requires]
 python_version = "3.8"

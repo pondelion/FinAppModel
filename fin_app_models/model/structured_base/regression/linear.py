@@ -1,14 +1,20 @@
 from datetime import datetime, timedelta
-from typing import Union, Tuple
+from typing import Union, Tuple, List, Dict
 
 import pandas as pd
 import numpy as np
+from sklearn import linear_model
 from overrides import overrides
 
 from ..base_model import BaseRegressionModel
 from ....processing import (
     IStructuredDataProcessing,
-    DefaultTrendLinearRegressionProcessing
+    TrendLinearRegressionDataProcessing,
+    LinearRegressionDataProcessing,
+)
+from ....param_tuning import (
+    IParamTuber,
+    DefaultTuner
 )
 
 
@@ -23,9 +29,10 @@ class TrendLinearRegression(BaseRegressionModel):
 
     def __init__(
         self,
-        data_processors: IStructuredDataProcessing = [DefaultTrendLinearRegressionProcessing()]
+        data_processors: List[IStructuredDataProcessing] = [TrendLinearRegressionDataProcessing()],
+        param_tuner: IParamTuber = DefaultTuner(),
     ):
-        super(TrendLinearRegression, self).__init__(data_processors)
+        super(TrendLinearRegression, self).__init__(data_processors, param_tuner)
 
     @overrides
     def _train(
@@ -33,6 +40,7 @@ class TrendLinearRegression(BaseRegressionModel):
         y_train: pd.Series,
         X_train: Union[pd.DataFrame, pd.Series] = None,
         dt_now: datetime = None,
+        model_params: Dict = {},
         **kwargs,
     ) -> None:
 
@@ -82,13 +90,53 @@ class TrendLinearRegression(BaseRegressionModel):
         return (slope, intercept)
 
 
-class SimpleLinearRegression(BaseRegressionModel):
+class LinearRegression(BaseRegressionModel):
 
-    def __init__(self):
-        raise NotImplementedError
+    def __init__(
+        self,
+        data_processors: List[IStructuredDataProcessing] = [LinearRegressionDataProcessing()],
+        param_tuner: IParamTuber = DefaultTuner(),
+    ):
+        super(LinearRegression, self).__init__(data_processors, param_tuner)
 
+    @overrides
+    def _train(
+        self,
+        y_train: pd.Series,
+        X_train: Union[pd.DataFrame, pd.Series] = None,
+        dt_now: datetime = None,
+        model_params: Dict = {},
+        **kwargs,
+    ) -> None:
 
-class MultipleLinearRegression(BaseRegressionModel):
+        self._model = linear_model.LinearRegression(**model_params)
 
-    def __init__(self):
-        raise NotImplementedError
+        self._model.fit(X_train, y_train)
+        self._X_col_names = X_train.columns
+
+    @overrides
+    def _predict(
+        self,
+        y: pd.Series = None,
+        X: Union[pd.DataFrame, pd.Series] = None,
+        pred_days: int = 30,
+        **kwargs,
+    ) -> pd.Series:
+        sr_pred = pd.Series(
+            index=X.index,
+            data=self._model.predict(X).flatten()
+        )
+        return sr_pred
+
+    def __str__(self):
+        if self._model is None:
+            return 'Not trained yet.'
+        eq = 'y = '
+        for i, (col_name, coeff) in enumerate(zip(self._X_col_names, self._model.coef_[0])):
+            if (coeff < 0) and (i > 0):
+                eq = eq[:-2]
+            eq += f'{coeff:.3f}{col_name} + '
+        if self._model.intercept_[0] < 0:
+            eq = eq[:-2]
+        eq += f'{self._model.intercept_[0]:.3f}'
+        return eq

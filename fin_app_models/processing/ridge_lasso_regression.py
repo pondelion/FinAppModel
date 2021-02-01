@@ -7,7 +7,7 @@ from .base_processing import IStructuredDataProcessing
 from ..entity.timeseries_data import TimeseriesData
 
 
-class TrendLinearRegressionDataProcessing(IStructuredDataProcessing):
+class RidgeRegressionDataProcessing(IStructuredDataProcessing):
 
     @overrides
     def preprocess(
@@ -15,8 +15,9 @@ class TrendLinearRegressionDataProcessing(IStructuredDataProcessing):
         X_train: Union[pd.DataFrame, pd.Series],
         y_train: pd.Series
     ) -> Tuple[Union[pd.DataFrame, pd.Series], pd.Series]:
-        ts_y_train = TimeseriesData(y_train)() if y_train is not None else None
-        return (X_train, ts_y_train)
+        ts_y_train = TimeseriesData(y_train)().to_numpy().reshape(-1, 1) if y_train is not None else None
+        ts_X_train = TimeseriesData(X_train)() if X_train is not None else None
+        return (ts_X_train, ts_y_train)
 
     @overrides
     def postprocess(
@@ -26,7 +27,7 @@ class TrendLinearRegressionDataProcessing(IStructuredDataProcessing):
         return y_train
 
 
-class LinearRegressionDataProcessing(IStructuredDataProcessing):
+class LassoRegressionDataProcessing(IStructuredDataProcessing):
 
     @overrides
     def preprocess(
