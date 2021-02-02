@@ -7,4 +7,9 @@ from .linear_regression import (
 from .ridge_lasso_regression import (
     RidgeRegressionDataProcessing,
     LassoRegressionDataProcessing,
+    ElasticNetRegressionDataProcessing,
 )
+from .random_forest_regression import RandomForestDataProcessing
+from .svm_regression import KernelSVRDataProcessing
+from .nn_regression import SKMLPDataProcessing
+from .knn_regression import KNNDataProcessing
