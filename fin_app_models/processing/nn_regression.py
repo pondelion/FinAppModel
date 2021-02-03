@@ -38,4 +38,6 @@ class SKMLPDataProcessing(IStructuredDataProcessing):
         self,
         y_train: pd.Series
     ) -> pd.Series:
+        ts_y_train = TimeseriesData(y_train)().to_numpy().reshape(-1, 1)
+        ts_y_train = self._mms.inverse_transform(ts_y_train).reshape(-1)
         return y_train
