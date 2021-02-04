@@ -27,7 +27,7 @@ class CNN(nn.Module):
         self._cnn_kernel_sizes = [(tks, n_feats) for tks in cnn_time_kernel_sizes]
         self._fc_out_dims = fc_out_dims
         self._fc_layers_num = len(fc_out_dims)
-        self._activation_cls = nn.ReLU
+        self._activation_cls = activation_cls
         self._use_pool = use_pool
         self._pool_kernel_size = pool_kernel_size
 
