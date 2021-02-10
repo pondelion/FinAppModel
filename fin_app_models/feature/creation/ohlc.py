@@ -1,3 +1,4 @@
+from copy import copy
 from typing import List
 
 import pandas as pd
@@ -6,7 +7,7 @@ from talib import RSI, BBANDS, MACD, NATR, ATR, PPO, APO, CMO
 
 
 def create_ohlc_features(
-    sr_clone: pd.Series,
+    sr_close: pd.Series,
     sr_open: pd.Series,
     sr_high: pd.Series,
     sr_low: pd.Series,
@@ -17,39 +18,45 @@ def create_ohlc_features(
     basic_stats_period: int=14,
     atr_period: int=14,
     return_lags: List[int]=[1, 3, 7, 10, 20, 30, 60],
+    col_name_prefix: str = None,
 ) -> pd.DataFrame:
     feature_dfs = [pd.DataFrame(
-        index=sr_clone.index,
+        index=sr_close.index,
         data={
-            'close': sr_clone,
+            'close': sr_close,
             'open': sr_open,
             'high': sr_high,
             'low': sr_low
         }
     )]
 
-    feature_dfs.append(rsi(sr_clone).to_frame('rsi'))
-    feature_dfs.append(macd(sr_clone, macd_fastperiod, macd_slowperiod, macd_signalperiod).to_frame('macd'))
-    high, mid, low = bollinger_band(sr_clone, bb_period)
+    feature_dfs.append(rsi(sr_close).to_frame('rsi'))
+    feature_dfs.append(macd(sr_close, macd_fastperiod, macd_slowperiod, macd_signalperiod).to_frame('macd'))
+    high, mid, low = bollinger_band(sr_close, bb_period)
     feature_dfs.append(pd.DataFrame({
         'bb_high': high,
         'bb_mid': mid,
         'bb_low': low,
         'bb_std': 0.5*(high-low)
     }))
-    feature_dfs.append(basic_stats(sr_clone, window=basic_stats_period))
-    atr_sr, natr_sr = atr(sr_clone, high, low, atr_period)
+    feature_dfs.append(basic_stats(sr_close, window=basic_stats_period))
+    atr_sr, natr_sr = atr(sr_close, high, low, atr_period)
     feature_dfs.append(pd.DataFrame({
         'atr': atr_sr,
         'natr': natr_sr,
     }))
-    feature_dfs.append(oscillator(sr_clone))
-    df_return = returns(sr_clone, return_lags)
+    feature_dfs.append(oscillator(sr_close))
+    df_return = returns(sr_close, return_lags)
     feature_dfs.append(df_return)
     feature_dfs.append(momentum(df_return, return_lags))
-    feature_dfs.append(periodic(sr_clone))
+    feature_dfs.append(periodic(sr_close))
 
-    return pd.concat(feature_dfs, axis=1)
+    df_feats = pd.concat(feature_dfs, axis=1)
+
+    if col_name_prefix is not None:
+        df_feats.columns = [f'{col_name_prefix}_{col_name}' for col_name in df_feats.columns]
+
+    return df_feats
 
 
 def rsi(ts: pd.Series, window: int=14) -> pd.Series:
@@ -148,14 +155,14 @@ def momentum(
     lags: List[int],
     col_name_fmt: str='return_lag{lag}'
 ) -> pd.DataFrame:
-
+    lags_cp = copy(lags)
     momentum_srs = {}
-    base_lag = min(lags)
-    lags.remove(base_lag)
+    base_lag = min(lags_cp)
+    lags_cp.remove(base_lag)
 
-    for lag in lags:
+    for lag in lags_cp:
         momentum_srs[f'momentum_{base_lag}_{lag}'] = df_return[col_name_fmt.format(lag=lag)] - df_return[col_name_fmt.format(lag=base_lag)]
-    
+
     return pd.DataFrame(momentum_srs)
 
 

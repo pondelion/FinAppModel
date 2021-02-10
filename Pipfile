@@ -1,16 +1,20 @@
 [[source]]
-name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
+name = "pypi"
+
+[packages]
+cython = "*"
+ta-lib = "*"
+overrides = "*"
+scikit-learn = "*"
+pandas = "*"
+optuna = "*"
+torch = "*"
 
 [dev-packages]
 pytest = "*"
-
-[packages]
-pandas = "*"
-overrides = "*"
-sklearn = "*"
-optuna = "*"
+fin-app-model = {editable = true, path = "."}
 
 [requires]
 python_version = "3.8"
