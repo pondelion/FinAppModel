@@ -24,6 +24,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest pipenv
+        chmod u+x extra_install.sh
+        ./extra_install.sh
+        ls /usr/include
+        cp -r ./ta-lib/include/* ./ta-lib
+        export CPATH=$CPATH:$(pwd)
+        export LIBRARY_PATH=$LIBRARY_PATH:/usr/lib
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pipenv install --dev -e .
     - name: Lint with flake8

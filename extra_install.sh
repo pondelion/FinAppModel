@@ -6,4 +6,4 @@ make
 make install
 cd ../
 rm -rf ta-lib-0.4.0-src.tar.gz
-rm -rf ta-lib
+# rm -rf ta-lib

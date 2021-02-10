@@ -2,4 +2,5 @@ fin_app_model.egg-info
 .pytest_cache
 log/*
 ta-lib
+requirements.txt
 Pipfile.lock
