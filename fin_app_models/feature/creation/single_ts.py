@@ -8,26 +8,26 @@ from talib import RSI, BBANDS, MACD, NATR, ATR, PPO, APO, CMO
 
 def create_single_ts_features(
     sr_ts: pd.Series,
-    macd_fastperiod: int=12,
-    macd_slowperiod: int=26,
-    macd_signalperiod: int=9,
-    bb_period: int=20,
-    basic_stats_period: int=14,
-    atr_period: int=14,
-    return_lags: List[int]=[1, 3, 7, 10, 20, 30, 60],
+    macd_fastperiod: int = 12,
+    macd_slowperiod: int = 26,
+    macd_signalperiod: int = 9,
+    bb_periods: int = [7, 20, 30, 60],
+    basic_stats_period: int = 14,
+    atr_period: int = 14,
+    return_lags: List[int] = [1, 3, 7, 10, 20, 30, 60],
     col_name_prefix: str = None,
 ) -> pd.DataFrame:
     feature_dfs = [sr_ts.to_frame()]
-
     feature_dfs.append(rsi(sr_ts).to_frame('rsi'))
     feature_dfs.append(macd(sr_ts, macd_fastperiod, macd_slowperiod, macd_signalperiod).to_frame('macd'))
-    high, mid, low = bollinger_band(sr_ts, bb_period)
-    feature_dfs.append(pd.DataFrame({
-        'bb_high': high,
-        'bb_mid': mid,
-        'bb_low': low,
-        'bb_std': 0.5*(high-low)
-    }))
+    for bbp in bb_periods:
+        high, mid, low = bollinger_band(sr_ts, bbp)
+        feature_dfs.append(pd.DataFrame({
+            f'bb{bbp}_high': high,
+            f'bb{bbp}_mid': mid,
+            f'bb{bbp}_low': low,
+            f'bb{bbp}_std': 0.5*(high-low)
+        }))
     feature_dfs.append(basic_stats(sr_ts, window=basic_stats_period))
     feature_dfs.append(oscillator(sr_ts))
     df_return = returns(sr_ts, return_lags)

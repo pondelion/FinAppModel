@@ -11,6 +11,8 @@ scikit-learn = "*"
 pandas = "*"
 optuna = "*"
 torch = "*"
+lightgbm = "*"
+catboost = "*"
 
 [dev-packages]
 pytest = "*"

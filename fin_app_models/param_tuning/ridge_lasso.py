@@ -12,7 +12,7 @@ from sklearn.linear_model import (
 import optuna
 optuna.logging.disable_default_handler()
 
-from .regression_optuna_tuner import RMSERegressionOptunaTuner
+from .optuna_tuner import RMSERegressionOptunaTuner
 
 
 class RidgeRegressionTuner(RMSERegressionOptunaTuner):

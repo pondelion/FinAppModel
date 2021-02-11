@@ -18,7 +18,7 @@ def _calc_lag_corr_df(
     return pd.concat(df_corrs).drop(['target_lag', target_col], axis=1)
 
 
-def find_max_lags(
+def find_corr_max_lags(
     df_ts: pd.DataFrame,
     target_col: str,
     max_search_lag: int=300,

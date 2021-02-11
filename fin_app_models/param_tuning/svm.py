@@ -8,7 +8,7 @@ from sklearn.svm import SVR
 import optuna
 optuna.logging.disable_default_handler()
 
-from .regression_optuna_tuner import RMSERegressionOptunaTuner
+from .optuna_tuner import RMSERegressionOptunaTuner
 
 
 class KernelSVRRegressionTuner(RMSERegressionOptunaTuner):

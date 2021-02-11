@@ -3,28 +3,28 @@ from typing import Union, Tuple, List, Dict
 
 import pandas as pd
 import numpy as np
-import lightgbm as lgb
+import catboost
 from overrides import overrides
 
 from ..base_model import BaseRegressionModel
 from ....processing import (
     IStructuredDataProcessing,
-    LGBMDataProcessing,
+    CatBoostDataProcessing,
 )
 from ....param_tuning import (
     IParamTuber,
-    LGBMRegressionTuner,
+    CatBoostRegressionTuner,
 )
 
 
-class LGBMRegression(BaseRegressionModel):
+class CatBoostRegression(BaseRegressionModel):
 
     def __init__(
         self,
-        data_processors: List[IStructuredDataProcessing] = [LGBMDataProcessing()],
-        param_tuner: IParamTuber = LGBMRegressionTuner(),
+        data_processors: List[IStructuredDataProcessing] = [CatBoostDataProcessing()],
+        param_tuner: IParamTuber = CatBoostRegressionTuner(),
     ):
-        super(LGBMRegression, self).__init__(data_processors, param_tuner)
+        super(CatBoostRegression, self).__init__(data_processors, param_tuner)
 
     @overrides
     def _train(
@@ -35,10 +35,14 @@ class LGBMRegression(BaseRegressionModel):
         model_params: Dict = {},
         **kwargs,
     ) -> None:
-        lgb_train = lgb.Dataset(X_train, y_train)
-        num_boost_round = kwargs.get('num_boost_round', 100)
-        self._model = lgb.train(model_params, lgb_train, num_boost_round=num_boost_round)
+        self._model = catboost.CatBoostRegressor(**model_params)
+        early_stopping_rounds = kwargs.get('early_stopping_rounds', 50)
 
+        self._model.fit(
+            X_train, y_train,
+            early_stopping_rounds=early_stopping_rounds,
+            verbose_eval=False,
+        )
         self._X_col_names = X_train.columns
 
     @overrides

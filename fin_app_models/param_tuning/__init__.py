@@ -1,11 +1,13 @@
 from .base_tuner import IParamTuber
 from .default_tuner import DefaultTuner
-from .ridge_lasso_regression import (
+from .ridge_lasso import (
     RidgeRegressionTuner,
     LassoRegressionTuner,
     ElasticNetRegressionTuner,
 )
-from .random_forest_regression import RandomForestRegressionTuner
-from .svm_regression import KernelSVRRegressionTuner
-from .nn_regression import SKMLPRegressionTuner
-from .knn_regression import KNNRegressionTuner
+from .random_forest import RandomForestRegressionTuner
+from .svm import KernelSVRRegressionTuner
+from .nn import SKMLPRegressionTuner
+from .knn import KNNRegressionTuner
+from .lgbm import LGBMRegressionTuner
+from .catboost import CatBoostRegressionTuner
