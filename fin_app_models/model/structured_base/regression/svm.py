@@ -47,7 +47,6 @@ class KernelSVRRegression(BaseRegressionModel):
         self,
         y: pd.Series = None,
         X: Union[pd.DataFrame, pd.Series] = None,
-        pred_days: int = 30,
         **kwargs,
     ) -> pd.Series:
         sr_pred = pd.Series(

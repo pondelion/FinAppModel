@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 import random
 
 import pandas as pd
@@ -73,3 +73,16 @@ def random_feat_select(
     print(random_feat_cols)
 
     return df_random_feats[random_feat_cols]
+
+
+def random_time_window_select(
+    dfs: List[pd.DataFrame],
+    min_interval_days: int = 15,
+    max_interval_days: int = 365*20,
+) -> List[pd.DataFrame]:
+    min_dt = dfs[0].index.min()
+    max_dt = dfs[0].index.max()
+
+    max_interval_days = min(
+        max_interval_days, (max_dt - min_dt).days
+    )

@@ -8,4 +8,4 @@ from .ridge_lasso_regression import (
 from .random_forest_regression import RandomForestRegressionTuner
 from .svm_regression import KernelSVRRegressionTuner
 from .nn_regression import SKMLPRegressionTuner
-from .knn_regression import KNeighborsRegressor
+from .knn_regression import KNNRegressionTuner
