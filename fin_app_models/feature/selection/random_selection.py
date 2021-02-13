@@ -1,5 +1,6 @@
 from typing import Dict, List
 import random
+from datetime import timedelta
 
 import pandas as pd
 
@@ -79,10 +80,34 @@ def random_time_window_select(
     dfs: List[pd.DataFrame],
     min_interval_days: int = 15,
     max_interval_days: int = 365*20,
+    fix_latest_date: bool = False,
 ) -> List[pd.DataFrame]:
     min_dt = dfs[0].index.min()
     max_dt = dfs[0].index.max()
 
+    if (max_dt - min_dt).days <= min_interval_days:
+        return dfs
+
     max_interval_days = min(
         max_interval_days, (max_dt - min_dt).days
     )
+
+    random_interval_days = random.randint(
+        min_interval_days, max_interval_days
+    )
+    random_time_indices = [random.randint(
+        0, len(df)-random_interval_days
+    ) for df in dfs]
+
+    if fix_latest_date:
+        sliced_dfs = [df[-random_interval_days:] for df in dfs]
+    else:
+        sliced_dfs = [df[ti:ti+random_interval_days] for df, ti in zip(dfs, random_time_indices)]
+
+    return sliced_dfs
+
+
+def random_lagged_select(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    raise NotImplementedError
