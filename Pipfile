@@ -13,6 +13,9 @@ optuna = "*"
 torch = "*"
 lightgbm = "*"
 catboost = "*"
+boto3 = "*"
+fsspec = "*"
+s3fs = "*"
 
 [dev-packages]
 pytest = "*"

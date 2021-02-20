@@ -4,3 +4,4 @@ log/*
 ta-lib
 requirements.txt
 Pipfile.lock
+fin_app_models/config/*.yml
