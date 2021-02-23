@@ -8,9 +8,15 @@ import yaml
 formatter = '%(levelname)s : %(asctime)s : %(message)s'
 logging.basicConfig(format=formatter)
 
-os.makedirs('log', exist_ok=True)
+log_dir = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    '..',
+    '..',
+    'log'
+)
+os.makedirs(log_dir, exist_ok=True)
 filename = os.path.join(
-    'log',
+    log_dir,
     f'{datetime.now().strftime("%Y%m%d_%H%M%S")}.log',
 )
 file_handler = logging.FileHandler(

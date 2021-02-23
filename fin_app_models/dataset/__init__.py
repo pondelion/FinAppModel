@@ -2,6 +2,10 @@ import pandas as pd
 
 from .stock import Stock
 from .stocklist import StockList
+from .economic_indicator import (
+    EconomicIndicatorJA,
+    IndicatorTypeJA
+)
 
 
 def check_aws_access() -> bool:
