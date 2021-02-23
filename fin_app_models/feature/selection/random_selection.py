@@ -1,6 +1,6 @@
 from typing import Dict, List
 import random
-from datetime import timedelta
+from datetime import timedelta, date, MINYEAR, MAXYEAR
 
 import pandas as pd
 
@@ -45,12 +45,12 @@ def random_feat_select(
     ) for key, sr in random_single_ts_srs]
 
     min_dt = min(
-        min([df.index.min() for df in ohlc_feat_dfs]),
-        min([df.index.min() for df in single_ts_feat_dfs]),
+        min([df.index.min() for df in ohlc_feat_dfs]) if len(ohlc_feat_dfs) > 0 else date(MAXYEAR, 1, 1),
+        min([df.index.min() for df in single_ts_feat_dfs]) if len(single_ts_feat_dfs) > 0 else date(MAXYEAR, 1, 1),
     )
     max_dt = max(
-        max([df.index.max() for df in ohlc_feat_dfs]),
-        max([df.index.max() for df in single_ts_feat_dfs]),
+        max([df.index.max() for df in ohlc_feat_dfs]) if len(ohlc_feat_dfs) > 0 else date(MINYEAR, 1, 1),
+        max([df.index.max() for df in single_ts_feat_dfs]) if len(single_ts_feat_dfs) > 0 else date(MINYEAR, 1, 1),
     )
 
     df_random_feats = pd.DataFrame(

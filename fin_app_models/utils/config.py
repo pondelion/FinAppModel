@@ -35,7 +35,16 @@ def _load_dev_config(filepath: str = DEFAULT_DEV_FILEPATH):
 
 
 class _AWSConfig(type):
-    config = _load_aws_config()
+    try:
+        config = _load_aws_config()
+        if 'ACCESS_KEY_ID' in config:
+            os.environ['AWS_ACCESS_KEY_ID'] = config['ACCESS_KEY_ID']
+        if 'SECRET_ACCESS_KEY' in config:
+            os.environ['AWS_SECRET_ACCESS_KEY'] = config['SECRET_ACCESS_KEY']
+        if 'REGION_NAME' in config:
+            os.environ['AWS_DEFAULT_REGION'] = config['REGION_NAME']
+    except Exception as e:
+        Logger.w(__class__, 'failed to load aws config file : {e}')
 
     def __getattr__(cls, key: str):
         try:
@@ -46,7 +55,10 @@ class _AWSConfig(type):
 
 
 class _DataLocationConfig(type):
-    config = _load_datalocation_config()
+    try:
+        config = _load_datalocation_config()
+    except Exception as e:
+        Logger.w(__class__, 'failed to load datalocation config file : {e}')
 
     def __getattr__(cls, key: str):
         try:
@@ -57,7 +69,10 @@ class _DataLocationConfig(type):
 
 
 class _DevConfig(type):
-    config = _load_dev_config()
+    try:
+        config = _load_dev_config()
+    except Exception as e:
+        Logger.w(__class__, 'failed to load dev config file : {e}')
 
     def __getattr__(cls, key: str):
         try:
