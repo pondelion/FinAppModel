@@ -44,13 +44,15 @@ class Agent:
         q_tensors = []
         state_tensors = []
         for df_state, action, reward, df_next_state, done, next_valid_actions in batch:
-            q = reward
+            action_q = reward
             if not done:
-                q += self._discount_factor * np.nanmax(
+                action_q += self._discount_factor * np.nanmax(
                     self._get_q_values(df_next_state, next_valid_actions)
                 )  # 現状態のQ値 = 現状態のQ値 + γ*max(次の状態でとれるアクションのQ最大値)
 
-            q_tensors.append(torch.Tensor(q))
+            q_values = self._predict(self._model, df_state)
+            q_values[action.value] = action_q  # 対象の行動のQ値だけ更新する。
+            q_tensors.append(torch.Tensor(q_values))
             state_tensors.append(torch.Tensor(df_state.to_numpy()))
 
         self._train(
