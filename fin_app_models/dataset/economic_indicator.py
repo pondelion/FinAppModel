@@ -62,4 +62,5 @@ class EconomicIndicatorJA(S3CSVCachedData):
         if self._DATETIME_COL_NAME in df.columns:
             df[self._DATETIME_COL_NAME] = pd.to_datetime(df[self._DATETIME_COL_NAME])
             df.set_index(self._DATETIME_COL_NAME, inplace=True)
+            df.sort_index(inplace=True)
         return df

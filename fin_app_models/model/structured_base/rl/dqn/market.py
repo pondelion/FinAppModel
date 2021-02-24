@@ -2,94 +2,104 @@ from typing import List
 
 import numpy as np
 import torch.nn as nn
+import pandas as pd
+
+from .actions import Action
 
 
 class Market:
 
-    ACTIONS = (
-        0,  # ノーポジ
-        1,  # 買い
-        2,  # 売り
-        3  # 保持
-    )
-
     def __init__(
         self,
-        timeseries: np.array,
+        df_X_train: pd.DataFrame,
+        sr_y_train: pd.Series,
         window: int,
-        model: nn.Module,
         cost: float,
         asset: int=30000,
-        reward_data_idx: int=0
     ):
-        self._timeseries = timeseries  # 学習に使う時系列データ。T(期間)xN(特徴量数)
+        if not self._validate_xy_data(df_X_train, sr_y_train):
+            raise Exception("df_X_train and sr_y_train's date index must be same.")
+        self._df_X_train = df_X_train
+        self._sr_y_train = sr_y_train
         self._no_posi_flg = True  # ノーポジフラグ
         self._window = window  # 過去何個分のデータを入力データ(状態)とするか幅
-        self._model = model
         self._cost = cost  # 決済コスト
-        self._reward_data_idx = reward_data_idx  # ターゲットインデックス(何個目の特徴量を報酬計算の教師データとするかのインデックス)
         self._t = window
         self._asset = asset
         self._init_asset = asset
 
     def _get_state(self, t):
         try:
-            state = self._timeseries[t-self._window:t, :]
+            df_state = self._df_X_train.iloc[t-self._window:t, :]
         except Exception as e:
             raise e
         
         # 標準化 -> ?
-        means = np.mean(state, axis=0)
-        state = (state/means - 1.0) * 100
+        means = self._df_X_train.mean(axis=0)
+        df_state = (df_state.div(means) - 1.0) * 100
 
-        return state
+        return df_state
 
-    def _get_valid_actions(self) -> List[int]:
+    def _get_valid_actions(self) -> List[Action]:
         if self._no_posi_flg:
-            return [Market.ACTIONS[0], Market.ACTIONS[1]]  # ノーポジor買い
+            return [Action.NO_POSI, Action.BUY]
         else:
-            return [Market.ACTIONS[2], Market.ACTIONS[3]]  # 売りor保持
+            return [Action.SELL, Action.HOLD]
 
-    def _get_reward(self, t: int, action: int) -> float:
+    def _get_reward(self, t: int, action: Action) -> float:
         reward = None
 
-        if action == 0:  # ノーポジ
+        if action == Action.NO_POSI:
             reward = 0
-        elif action == 1:  # 買い
-            reward = self._timeseries[t+1, self._reward_data_idx] - self._timeseries[t, self._reward_data_idx] - self._cost
-        elif action == 2:  # 売り
-            reward = -(self._timeseries[t+1, self._reward_data_idx] - self._timeseries[t, self._reward_data_idx]) - self._cost
-        elif action == 3:  # 保持
-            reward = self._timeseries[t+1, self._reward_data_idx] - self._timeseries[t, self._reward_data_idx]
+        elif action == Action.BUY:
+            reward = self._sr_y_train[t+1] - self._sr_y_train[t] - self._cost
+        elif action == Action.SELL:
+            reward = -(self._sr_y_train[t+1] - self._sr_y_train[t]) - self._cost
+        elif action == Action.HOLD:
+            reward = self._sr_y_train[t+1] - self._sr_y_train[t] - self._cost
         else:
             raise ValueError(f'Invalid action : {action}')
 
         return reward
 
-    def step(self, action: int):
+    def step(self, action: Action):
 
         reward = self._get_reward(self._t, action)
 
-        if (action == Market.ACTIONS[0]) or (action == Market.ACTIONS[2]):
+        if (action == Action.NO_POSI) or (action ==Action.SELL):
             self._no_posi_flg = True
         else:
             self._no_posi_flg = False
 
-        if action == Market.ACTIONS[1]:  # 買い
-            self._asset -= (self._timeseries[self._t, self._reward_data_idx] + self._cost)
-        elif action == Market.ACTIONS[2]:  # 売り
-            self._asset += (self._timeseries[self._t, self._reward_data_idx] - self._cost)
+        if action == Action.BUY:
+            self._asset -= (self._sr_y_train[self._t] + self._cost)
+        elif action == Action.SELL:
+            self._asset += (self._sr_y_train[self._t]  - self._cost)
 
         self._t += 1
 
         # アクションを取った後(タイムステップを1進めた)の状態を取得
-        state = self._get_state(self._t)
+        df_state = self._get_state(self._t)
 
-        done = self._timeseries.shape[0] == (self._t + 1)
+        done = len(self._sr_y_train) == (self._t + 1)
 
-        return state, reward, done, self._get_valid_actions(), self._asset
+        return df_state, reward, done, self._get_valid_actions(), self._asset
 
     def reset(self):
         self._no_posi_flg = True
         self._t = self._window
         self._asset = self._init_asset
+        df_state = self._get_state(self._t)
+        valid_actions = self._get_valid_actions()
+        return df_state, valid_actions
+
+    def _validate_xy_data(
+        self, df_X: pd.DataFrame, sr_y: pd.Series,
+    ) -> bool:
+        if len(df_X) != len(sr_y):
+            return False
+        if df_X.index.min() != sr_y.index.min():
+            return False
+        if df_X.index.max() != sr_y.index.max():
+            return False
+        return True
