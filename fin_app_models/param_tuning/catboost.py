@@ -4,7 +4,7 @@ from copy import copy
 
 import pandas as pd
 from overrides import overrides
-import catboost
+from catboost import CatBoostRegressor
 import optuna
 optuna.logging.disable_default_handler()
 
@@ -32,7 +32,7 @@ class CatBoostRegressionTuner(RMSERegressionOptunaTuner):
         super(CatBoostRegressionTuner, self).__init__(
             fixed_params,
             tuning_param,
-            CatBoostRegressionTuner
+            CatBoostRegressor
         )
 
     @overrides

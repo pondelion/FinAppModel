@@ -4,7 +4,7 @@ import numpy as np
 import torch.nn as nn
 import pandas as pd
 
-from .actions import Action
+from .actions import Action, Position
 
 
 class Market:
@@ -21,7 +21,7 @@ class Market:
             raise Exception("df_X_train and sr_y_train's date index must be same.")
         self._df_X_train = df_X_train
         self._sr_y_train = sr_y_train
-        self._no_posi_flg = True  # ノーポジフラグ
+        self._position = Position.NO_POSI
         self._window = window  # 過去何個分のデータを入力データ(状態)とするか幅
         self._cost = cost  # 決済コスト
         self._t = window
@@ -40,8 +40,8 @@ class Market:
 
         return df_state
 
-    def _get_valid_actions(self) -> List[Action]:
-        if self._no_posi_flg:
+    def get_valid_actions(self, position: Position) -> List[Action]:
+        if position == Position.NO_POSI:
             return [Action.NO_POSI, Action.BUY]
         else:
             return [Action.SELL, Action.HOLD]
@@ -67,9 +67,9 @@ class Market:
         reward = self._get_reward(self._t, action)
 
         if (action == Action.NO_POSI) or (action ==Action.SELL):
-            self._no_posi_flg = True
+            self._position = Position.NO_POSI
         else:
-            self._no_posi_flg = False
+            self._position = Position.HOLD
 
         if action == Action.BUY:
             self._asset -= (self._sr_y_train[self._t] + self._cost)
@@ -83,14 +83,14 @@ class Market:
 
         done = len(self._sr_y_train) == (self._t + 1)
 
-        return df_state, reward, done, self._get_valid_actions(), self._asset
+        return df_state, reward, done, self.get_valid_actions(self._position), self._asset
 
     def reset(self):
-        self._no_posi_flg = True
+        self._position = Position.NO_POSI
         self._t = self._window
         self._asset = self._init_asset
         df_state = self._get_state(self._t)
-        valid_actions = self._get_valid_actions()
+        valid_actions = self.get_valid_actions(self._position)
         return df_state, valid_actions
 
     def _validate_xy_data(

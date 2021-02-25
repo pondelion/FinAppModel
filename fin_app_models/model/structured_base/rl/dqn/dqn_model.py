@@ -1,11 +1,14 @@
-from typing import Dict, Union
+from typing import Dict, Union, Tuple
 import copy
 
+import numpy as np
 import pandas as pd
+from fastprogress import progress_bar as pb
 
 from .market import Market
 from .agent import Agent
 from .model.models import QModelType
+from .actions import Action, Position
 
 
 class DQNModel:
@@ -25,6 +28,7 @@ class DQNModel:
         eps: float = 0.05,
     ):
         model_params['n_feats'] = len(df_X_train.columns)
+        model_params['timeseries_len'] = state_window
         model_params['n_actions'] = 4
         self._market = Market(
             df_X_train=df_X_train,
@@ -43,7 +47,7 @@ class DQNModel:
 
         self._histories = {}
 
-        for episode in range(n_episodes):
+        for episode in pb(range(n_episodes)):
             
             t_idx = state_window
             
@@ -73,7 +77,7 @@ class DQNModel:
 
                 # save state and execute training
                 self._agent.remember(df_state, action, reward, df_next_state, done, valid_actions)
-                self._agent.agent.replay()
+                self._agent.replay()
 
                 df_state = df_next_state
 
@@ -85,3 +89,13 @@ class DQNModel:
             self._histories[f'episode{episode}']['assets'] = assets
 
         return copy.deepcopy(self._histories)
+
+    def predict(self, df_state: pd.DataFrame, position: Position) -> Tuple[Action, Position]:
+        valid_actions = self._market.get_valid_actions(position)
+        q_values = self._agent._get_q_values(df_state, valid_actions)
+        next_action = Action.idx2action(np.nanargmax(q_values))
+        if next_action == Action.NO_POSI or next_action == Action.SELL:
+            next_position = Position.NO_POSI
+        else:
+            next_position = Position.HOLD
+        return next_action, next_position

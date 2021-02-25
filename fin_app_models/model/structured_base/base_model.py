@@ -51,11 +51,12 @@ class BaseRegressionModel(metaclass=ABCMeta):
             X_train_preprocessed, y_train_preprocessed = dp.preprocess_cols(
                 X_train_preprocessed, y_train_preprocessed
             )
-
         if auto_param_tuning:
             Logger.d(self.__class__.__name__, 'Start tuning parameters')
             self._best_params = self._param_tuner.param_tuning(
-                X_train_preprocessed, y_train_preprocessed, dt_now, 
+                y_train=y_train_preprocessed,
+                X_train=X_train_preprocessed,
+                dt_now=dt_now, 
             )
             Logger.d(self.__class__.__name__, 'Done tuning parameters')
             Logger.d(self.__class__.__name__, f'best_pramas : {self._best_params}')

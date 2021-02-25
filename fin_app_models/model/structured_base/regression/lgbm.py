@@ -53,3 +53,10 @@ class LGBMRegression(BaseRegressionModel):
             data=self._model.predict(X).flatten()
         )
         return sr_pred
+
+    def feature_importance(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            data=self._model.feature_importance(),
+            index=self._X_col_names,
+            columns=['importance']
+        ).sort_values(by='importance', ascending=False)

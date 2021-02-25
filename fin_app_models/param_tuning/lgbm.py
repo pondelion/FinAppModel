@@ -16,7 +16,7 @@ class LGBMRegressionTuner(IParamTuber):
 
     def __init__(self):
         self._fixed_params = {
-            'objective': 'mean_squared_error',
+            'objective': 'regression',
             'metric': 'rmse',
             'verbose': -1,
         }
@@ -30,14 +30,11 @@ class LGBMRegressionTuner(IParamTuber):
     ) -> Dict[str, Union[float, str, int]]:
         lgb_train = lgb.Dataset(X_train, y_train)
 
-        best_params, history = {}, []
-        _ = lgb_optuna.train(
+        opt = lgb_optuna.train(
             self._fixed_params,
             lgb_train, valid_sets=lgb_train,
             verbose_eval=False,
             num_boost_round=100,
             # early_stopping_rounds=5,
-            best_params=best_params,
-            tuning_history=history
         )
-        return best_params
+        return opt.params

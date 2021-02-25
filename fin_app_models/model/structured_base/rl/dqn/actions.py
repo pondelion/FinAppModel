@@ -1,6 +1,11 @@
 from enum import Enum
 
 
+class Position(Enum):
+    NO_POSI = 0
+    HOLD = 1
+
+
 class Action(Enum):
     NO_POSI = 0
     BUY = 1
