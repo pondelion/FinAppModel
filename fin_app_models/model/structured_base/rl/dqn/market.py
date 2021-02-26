@@ -27,18 +27,21 @@ class Market:
         self._t = window
         self._asset = asset
         self._init_asset = asset
+        self._X_means = self._df_X_train.mean(axis=0)
 
     def _get_state(self, t):
         try:
             df_state = self._df_X_train.iloc[t-self._window:t, :]
         except Exception as e:
             raise e
-        
-        # 標準化 -> ?
-        means = self._df_X_train.mean(axis=0)
-        df_state = (df_state.div(means) - 1.0) * 100
+
+        # means = self._df_X_train.mean(axis=0)
+        df_state = self.preprocess(df_state)
 
         return df_state
+
+    def preprocess(self, df_state: pd.DataFrame) -> pd.DataFrame:
+        return (df_state.div(self._X_means) - 1.0) * 100
 
     def get_valid_actions(self, position: Position) -> List[Action]:
         if position == Position.NO_POSI:

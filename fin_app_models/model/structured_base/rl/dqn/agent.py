@@ -127,6 +127,7 @@ class Agent:
         q_batch: torch.Tensor,
         action: Action,
     ) -> None:
+        self._model.train()
         out = self._model(state_batch)
         loss = self._mse_loss(out, q_batch)
         self._optim.zero_grad()
@@ -137,6 +138,7 @@ class Agent:
         self,
         df_state: Union[pd.DataFrame, List[pd.DataFrame]]
     ) -> np.array:
+        self._model.eval()
         if isinstance(df_state, pd.DataFrame):
             state_tensor = torch.Tensor(df_state.to_numpy()).unsqueeze(0)  # (batch_size(1), seq_len, n_feats)
             if self._model_type == QModelType.CNN:

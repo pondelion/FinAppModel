@@ -19,7 +19,7 @@ class DQNModel:
         sr_y_train: pd.Series,
         n_episodes: int,
         state_window: int,
-        model_type: QModelType = QModelType.CNN,
+        model_type: QModelType = QModelType.BILSTM,
         model_params: Dict[str, Union[str, int, float]] = {},
         cost: int = 0,
         asset: int = 1000000,

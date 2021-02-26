@@ -1,19 +1,20 @@
 import random
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from overrides import overrides
 import pandas as pd
 
-from ..base_model import BaseRegressionEnsambleModel
+from ..base_model import BaseRegressionBaggingModel
 from ...structured_base.models import (
     RegressionModel
 )
+from ...structured_base.base_model import BaseRegressionModel
 from ....feature.selection.random_selection import random_feat_select
 from ....feature.creation.ohlc import create_ohlc_features
 from ....feature.creation.single_ts import create_single_ts_features
 
 
-class Broccoli(BaseRegressionEnsambleModel):
+class Broccoli(BaseRegressionBaggingModel):
 
     @overrides
     def train(
@@ -40,12 +41,14 @@ class Broccoli(BaseRegressionEnsambleModel):
         high_col_name: str = 'high',
         low_col_name: str = 'low',
     ) -> None:
+        replace_rate = 0.4
+
         model_clss = random.choices(estimator_models, n_estimators)
 
-        self._estimators = [model.value() for model in model_clss]
-
+        self._estimators = []
         self._X_cols = []
-        for estimator in self._estimators:
+        self._scores = []
+        for model_cls in model_clss:
             if auto_generate_feats:
                 df_train_feat = random_feat_select(
                     ohlc_df_dict=X_train_ohlc_df_dict,
@@ -59,10 +62,20 @@ class Broccoli(BaseRegressionEnsambleModel):
             else:
                 raise NotImplementedError
 
+            estimator = model_cls.value()
             estimator.train(
                 y_train=y_train,
                 X_train=df_train_feat,
             )
+            self._estimators.append(estimator)
+            score = ts_cross_validate(model_cls.value(), y_train, df_train_feat)
+            self._scores.append(score)
+
+        # select top 100*select_rate % good performance estimators.
+        select_rate = 0.3
+        self._estimators, self._scores, self._X_cols = self._select_high_performance_estimators(
+            self._estimators, self._scores, self._X_cols, select_rate,
+        )
 
     @overrides
     def _predict(
@@ -100,3 +113,12 @@ class Broccoli(BaseRegressionEnsambleModel):
         preds: List[pd.DataFrame],
     ) -> pd.DataFrame:
         return pd.concat(preds, axis=1).mean(axis=1)
+
+    def _select_high_performance_estimators(
+        self,
+        estimators: List[BaseRegressionModel],
+        scores,
+        X_cols,
+        select_rate: float = 0.3,
+    ) -> List[BaseRegressionModel]:
+        raise NotImplementedError

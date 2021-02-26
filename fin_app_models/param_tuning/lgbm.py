@@ -28,11 +28,18 @@ class LGBMRegressionTuner(IParamTuber):
         X_train: Union[pd.DataFrame, pd.Series] = None,
         dt_now: datetime = None,
     ) -> Dict[str, Union[float, str, int]]:
-        lgb_train = lgb.Dataset(X_train, y_train)
+        lgb_train = lgb.Dataset(
+            X_train[:int(len(X_train)*0.8)],
+            y_train[:int(len(y_train)*0.8)]
+        )
+        lgb_eval = lgb.Dataset(
+            X_train[int(len(X_train)*0.8):],
+            y_train[int(len(y_train)*0.8):]
+        )
 
         opt = lgb_optuna.train(
             self._fixed_params,
-            lgb_train, valid_sets=lgb_train,
+            lgb_train, valid_sets=lgb_eval,
             verbose_eval=False,
             num_boost_round=100,
             # early_stopping_rounds=5,

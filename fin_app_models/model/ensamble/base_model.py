@@ -8,7 +8,7 @@ from ..structured_base.models import (
 )
 
 
-class BaseRegressionEnsambleModel(metaclass=ABCMeta):
+class BaseRegressionBaggingModel(metaclass=ABCMeta):
 
     @abstractmethod
     def train(

@@ -1,6 +1,7 @@
 from typing import Dict, List
 
 import pandas as pd
+from fastprogress import progress_bar as pb
 
 from .random_selection import random_feat_select
 from ...model.structured_base.regression import LGBMRegression
@@ -40,20 +41,23 @@ def lgbm_reg_random_feats_search(
     ).dropna()
     X = df_merged[df_random_feats.columns]
     y = df_merged['target']
+    feat_len = len(X.columns)
+    inportance_dfs = []
 
-    for _ in range(n_repeats):
+    for _ in pb(range(n_repeats)):
         model = LGBMRegression()
         model.train(
-            y_train=X,
-            X_train=y
+            y_train=y,
+            X_train=X
         )
         df_importance = model.feature_importance().sort_values(
             by='importance', ascending=False
         )
+        inportance_dfs.append(df_importance[:int(feat_len*(1-replace_rate))])
         # Remain feature_num*(1-replace_rate) high importance features as next candisates.
-        selected_cols = list(df_importance[:int(len(df_importance)*(1-replace_rate))].index)
+        selected_feats = list(df_importance[:int(feat_len*(1-replace_rate))].index)
         df_condiate_feats = pd.merge(
-            sr_y.rename('target'), df_merged[selected_cols],
+            sr_y.rename('target'), df_merged[selected_feats],
             left_index=True, right_index=True,
         ).dropna()
         # Adopt feature_num*(replace_rate) newly created features as next candidates.
@@ -62,18 +66,19 @@ def lgbm_reg_random_feats_search(
             single_ts_sr_dict=single_ts_X_sr_dict,
             min_select_tss=min_select_tss,
             max_select_tss=max_select_tss,
-            min_select_feats=int(len(df_importance)*(replace_rate)),
-            max_select_feats=int(len(df_importance)*(replace_rate)),
+            min_select_feats=int(feat_len*(replace_rate)),
+            max_select_feats=int(feat_len*(replace_rate)),
             close_col_name=close_col_name,
             open_col_name=open_col_name,
             high_col_name=high_col_name,
             low_col_name=low_col_name,
         )
+        new_feats = list(set(df_new_random_feats.columns)-set(selected_feats))  # delete duplicates
         df_merged = pd.merge(
-            df_condiate_feats, df_new_random_feats,
+            df_condiate_feats, df_new_random_feats[new_feats],
             left_index=True, right_index=True,
         ).dropna()
-        X = df_merged[selected_cols+list(df_new_random_feats.columns)]
+        X = df_merged[selected_feats+list(df_new_random_feats.columns)]
         y = df_merged['target']
 
-    return df_importance[:int(len(df_importance)*(1-replace_rate))]
+    return inportance_dfs[::-1]

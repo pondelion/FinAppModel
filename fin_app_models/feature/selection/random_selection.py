@@ -71,7 +71,6 @@ def random_feat_select(
     )
 
     random_feat_cols = random.sample(list(df_random_feats.columns), n_select_feats)
-    print(random_feat_cols)
 
     return df_random_feats[random_feat_cols]
 
