@@ -55,11 +55,11 @@ class Market:
         if action == Action.NO_POSI:
             reward = 0
         elif action == Action.BUY:
-            reward = self._sr_y_train[t+1] - self._sr_y_train[t] - self._cost
+            reward = self._sr_y_train[t] - self._cost
         elif action == Action.SELL:
-            reward = -(self._sr_y_train[t+1] - self._sr_y_train[t]) - self._cost
+            reward = -self._sr_y_train[t] - self._cost
         elif action == Action.HOLD:
-            reward = self._sr_y_train[t+1] - self._sr_y_train[t] - self._cost
+            reward = self._sr_y_train[t]
         else:
             raise ValueError(f'Invalid action : {action}')
 

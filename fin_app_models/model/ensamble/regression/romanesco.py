@@ -9,6 +9,7 @@ from ...structured_base.models import (
     RegressionModel
 )
 from ...structured_base.base_model import BaseRegressionModel
+from ....evaluation.regression.cross_validation import ts_cross_validate
 from ....feature.selection.random_selection import random_feat_select
 from ....feature.creation.ohlc import create_ohlc_features
 from ....feature.creation.single_ts import create_single_ts_features
@@ -68,8 +69,13 @@ class Broccoli(BaseRegressionBaggingModel):
                 X_train=df_train_feat,
             )
             self._estimators.append(estimator)
-            score = ts_cross_validate(model_cls.value(), y_train, df_train_feat)
-            self._scores.append(score)
+            df_score = ts_cross_validate(
+                model=model_cls.value(),
+                y=y_train,
+                X=df_train_feat,
+                n_splits=5
+            )
+            self._scores.append(df_score['rmse'].mean())
 
         # select top 100*select_rate % good performance estimators.
         select_rate = 0.3
