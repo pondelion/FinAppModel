@@ -20,12 +20,15 @@ class Agent:
         discount_factor: float = 0.95,
         eps: float = 0.05,
         lr: float = 0.005,
+        device: str = 'cpu',
     ):
         self._model_type = model_type
         self._model = model_type.value(**model_params)
+        self._model.to(device)
         self._memory = []
         self._batch_size = batch_size
         self._discount_factor = discount_factor
+        self._device = device
         self._eps = eps
         self._mse_loss = nn.MSELoss()
         self._optim = torch.optim.Adam(
@@ -67,8 +70,8 @@ class Agent:
         q_batch = torch.Tensor(q_values)
         self._train(
             model=self._model,
-            state_batch=state_batch,
-            q_batch=q_batch,
+            state_batch=state_batch.to(self._device),
+            q_batch=q_batch.to(self._device),
             action=action
         )  # 現状態を入力、出力を更新したQ値としてモデルを学習
 
@@ -143,12 +146,15 @@ class Agent:
             state_tensor = torch.Tensor(df_state.to_numpy()).unsqueeze(0)  # (batch_size(1), seq_len, n_feats)
             if self._model_type == QModelType.CNN:
                 state_tensor = state_tensor.unsqueeze(1)  # (batch_size(1), seq_len, n_feats) => (batch_size(1), channel(1), seq_len, n_feats)
-            pred = self._model(state_tensor).detach().numpy().flatten()
+            pred = self._model(state_tensor.to(self._device)).cpu().detach().numpy().flatten()
         elif isinstance(df_state, list) and isinstance(df_state[0], pd.DataFrame):
             state_tensor = torch.stack([torch.Tensor(ds.to_numpy()) for ds in df_state])  # (batch_size, seq_len, n_feats)
             if self._model_type == QModelType.CNN:
                 state_tensor = state_tensor.unsqueeze(1)  # (batch_size, seq_len, n_feats) => (batch_size, channel(1), seq_len, n_feats)
-            pred = self._model(state_tensor).detach().numpy().reshape((len(df_state), -1))
+            pred = self._model(state_tensor.to(self._device)).cpu().detach().numpy().reshape((len(df_state), -1))
         else:
             raise Exception(f'_predict() received invalid type input {type(df_state)}')
         return pred
+
+    def to(self, device: str) -> None:
+        self._model.to(device)

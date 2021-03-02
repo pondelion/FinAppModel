@@ -86,8 +86,8 @@ class BILSTMRegression(BaseTimeseriesModel):
         except Exception:
             raise Exception('Paramerer [seq_len] must be specified.')
         n_epoch = kwargs.get('n_epoch', 100)
-        hidden_dim = kwargs.get('n_epoch', 32)
-        num_layers = kwargs.get('n_epoch', 2)
+        hidden_dim = kwargs.get('hidden_dim', 32)
+        num_layers = kwargs.get('num_layers', 2)
         lr = kwargs.get('lr', 0.005)
         batch_size = kwargs.get('batch_size', 16)
 
@@ -190,8 +190,8 @@ class BILSTMMultiTimescaleRegression(BaseTimeseriesModel):
             time_window_sizes = [7, 20, 30, 60]
             Logger.w(self.__class__, f'Parameter [time_window_sizes] not specified, using default time_window_sizes : {time_window_sizes}')
         n_epoch = kwargs.get('n_epoch', 100)
-        hidden_dim = kwargs.get('n_epoch', 32)
-        num_layers = kwargs.get('n_epoch', 2)
+        hidden_dim = kwargs.get('hidden_dim', 32)
+        num_layers = kwargs.get('num_layers', 2)
         lr = kwargs.get('lr', 0.005)
         batch_size = kwargs.get('batch_size', 16)
         lstm_output_dim = kwargs.get('lstm_output_dim', 8)

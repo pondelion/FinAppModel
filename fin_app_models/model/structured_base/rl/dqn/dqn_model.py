@@ -26,6 +26,7 @@ class DQNModel:
         batch_size: int = 32,
         discount_factor: float = 0.95,
         eps: float = 0.05,
+        device: str = 'cpu',
     ):
         model_params['n_feats'] = len(df_X_train.columns)
         model_params['timeseries_len'] = state_window
@@ -43,6 +44,7 @@ class DQNModel:
             batch_size=batch_size,
             discount_factor=discount_factor,
             eps=eps,
+            device=device,
         )
 
         self._histories = {}
@@ -99,3 +101,9 @@ class DQNModel:
         else:
             next_position = Position.HOLD
         return next_action, next_position
+
+    def preprocess(self, df_state: pd.DataFrame) -> pd.DataFrame:
+        return self._market.preprocess(df_state)
+
+    def to(self, device: str) -> None:
+        self._agent.to(device)

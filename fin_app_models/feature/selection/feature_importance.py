@@ -1,6 +1,9 @@
 from typing import Dict, List
+from copy import copy
 
 import pandas as pd
+from sklearn.metrics import mean_squared_error
+import numpy as np
 from fastprogress import progress_bar as pb
 
 from .random_selection import random_feat_select
@@ -43,6 +46,8 @@ def lgbm_reg_random_feats_search(
     y = df_merged['target']
     feat_len = len(X.columns)
     inportance_dfs = []
+    rmses = []
+    prev_selected_feats = None
 
     for _ in pb(range(n_repeats)):
         model = LGBMRegression()
@@ -50,16 +55,30 @@ def lgbm_reg_random_feats_search(
             y_train=y,
             X_train=X
         )
+        y_pred = model.predict(X=X)
+        df_pred = pd.merge(
+            y.to_frame('y'), y_pred.to_frame('y_pred'),
+            how='inner',
+            left_index=True, right_index=True
+        )
+        rmse = np.sqrt(
+            mean_squared_error(df_pred['y'].to_numpy(), df_pred['y_pred'].to_numpy())
+        )
+        rmses.append(rmse)
         df_importance = model.feature_importance().sort_values(
             by='importance', ascending=False
         )
         inportance_dfs.append(df_importance[:int(feat_len*(1-replace_rate))])
-        # Remain feature_num*(1-replace_rate) high importance features as next candisates.
-        selected_feats = list(df_importance[:int(feat_len*(1-replace_rate))].index)
+        if (df_importance['importance']==0).all() and prev_selected_feats is not None:
+            selected_feats = copy(prev_selected_feats)
+        else:
+            # Remain feature_num*(1-replace_rate) high importance features as next candisates.
+            selected_feats = list(df_importance[:int(feat_len*(1-replace_rate))].index)
         df_condiate_feats = pd.merge(
             sr_y.rename('target'), df_merged[selected_feats],
             left_index=True, right_index=True,
         ).dropna()
+        prev_selected_feats = copy(selected_feats)
         # Adopt feature_num*(replace_rate) newly created features as next candidates.
         df_new_random_feats = random_feat_select(
             ohlc_df_dict=ohlc_ts_X_df_dict,
@@ -81,4 +100,4 @@ def lgbm_reg_random_feats_search(
         X = df_merged[selected_feats+list(df_new_random_feats.columns)]
         y = df_merged['target']
 
-    return inportance_dfs[::-1]
+    return inportance_dfs[::-1], rmses

@@ -43,5 +43,6 @@ class LGBMRegressionTuner(IParamTuber):
             verbose_eval=False,
             num_boost_round=100,
             # early_stopping_rounds=5,
+            show_progress_bar=False,
         )
         return opt.params
