@@ -71,11 +71,11 @@ class TestRegressionModel:
         print(pred)
         print(lgbm_model.feature_importance())
 
-    # def test_catboost_regression(self, dummy_data):
-    #     catboost_model = CatBoostRegression()
-    #     catboost_model.train(
-    #         y_train=dummy_data['y'],
-    #         X_train=dummy_data['X']
-    #     )
-    #     pred = catboost_model.predict(X=dummy_data['X'])
-    #     print(pred)
+    def test_catboost_regression(self, dummy_data):
+        catboost_model = CatBoostRegression()
+        catboost_model.train(
+            y_train=dummy_data['y'],
+            X_train=dummy_data['X']
+        )
+        pred = catboost_model.predict(X=dummy_data['X'])
+        print(pred)

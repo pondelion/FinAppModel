@@ -58,7 +58,7 @@ class RMSERegressionOptunaTuner(IParamTuber, metaclass=ABCMeta):
         scores = cross_validate(
             model, self._X_train, self._y_train, cv=tscv, scoring='neg_root_mean_squared_error'
         )
-        rmse_mean = scores['test_score'].mean()
+        rmse_mean = -scores['test_score'].mean()
 
         return rmse_mean
 

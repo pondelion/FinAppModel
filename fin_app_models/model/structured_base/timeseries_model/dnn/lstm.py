@@ -91,6 +91,7 @@ class BILSTMRegression(BaseTimeseriesModel):
         lr = kwargs.get('lr', 0.005)
         batch_size = kwargs.get('batch_size', 16)
 
+        self._y_mms.fit(y_train.to_numpy().reshape(-1, 1))
         xs_train, ys_train = self._create_xy_dataset(X_train, y_train, seq_len)
 
         self._model = _BILSTM(
@@ -154,7 +155,7 @@ class BILSTMRegression(BaseTimeseriesModel):
         return x
 
     def _preprocess_input_y_sequence(self, sr_y_seq: pd.DataFrame, seq_len: int):
-        y = self._y_mms.fit_transform(sr_y_seq.to_numpy().reshape(-1, 1)).flatten()
+        y = self._y_mms.transform(sr_y_seq.to_numpy().reshape(-1, 1)).flatten()
         y = torch.Tensor(y).view(seq_len, 1)
         return y
 
@@ -196,6 +197,7 @@ class BILSTMMultiTimescaleRegression(BaseTimeseriesModel):
         batch_size = kwargs.get('batch_size', 16)
         lstm_output_dim = kwargs.get('lstm_output_dim', 8)
 
+        self._y_mms.fit(y_train.to_numpy().reshape(-1, 1))
         xs_train_list = []
         ys_train_list = []
         for seq_len in time_window_sizes:
@@ -285,6 +287,6 @@ class BILSTMMultiTimescaleRegression(BaseTimeseriesModel):
         return x
 
     def _preprocess_input_y_sequence(self, sr_y_seq: pd.DataFrame, seq_len: int):
-        y = self._y_mms.fit_transform(sr_y_seq.to_numpy().reshape(-1, 1)).flatten()
+        y = self._y_mms.transform(sr_y_seq.to_numpy().reshape(-1, 1)).flatten()
         y = torch.Tensor(y).view(seq_len, 1)
         return y

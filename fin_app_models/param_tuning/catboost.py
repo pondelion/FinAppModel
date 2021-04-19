@@ -17,7 +17,7 @@ class CatBoostRegressionTuner(RMSERegressionOptunaTuner):
         fixed_params = {
             'iterations': 500,
             'learning_rate': 0.05,
-            'use_best_model': True,
+            # 'use_best_model': True,
             'od_type' : 'Iter',
             'od_wait' : 100,
             'random_seed': 42,
