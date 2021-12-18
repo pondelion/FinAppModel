@@ -44,7 +44,8 @@ class _AWSConfig(type):
         if 'REGION_NAME' in config:
             os.environ['AWS_DEFAULT_REGION'] = config['REGION_NAME']
     except Exception as e:
-        Logger.w(__class__, 'failed to load aws config file : {e}')
+        config = {}
+        Logger.w('_AWSConfig', f'failed to load aws config file : {e}')
 
     def __getattr__(cls, key: str):
         try:
@@ -58,7 +59,8 @@ class _DataLocationConfig(type):
     try:
         config = _load_datalocation_config()
     except Exception as e:
-        Logger.w(__class__, 'failed to load datalocation config file : {e}')
+        config = {}
+        Logger.w('_DataLocationConfig', f'failed to load datalocation config file : {e}')
 
     def __getattr__(cls, key: str):
         try:
@@ -72,7 +74,8 @@ class _DevConfig(type):
     try:
         config = _load_dev_config()
     except Exception as e:
-        Logger.w(__class__, 'failed to load dev config file : {e}')
+        config = {}
+        Logger.w('_DevConfig', f'failed to load dev config file : {e}')
 
     def __getattr__(cls, key: str):
         try:
