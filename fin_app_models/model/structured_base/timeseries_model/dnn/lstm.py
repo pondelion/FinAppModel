@@ -1,21 +1,21 @@
 from datetime import datetime, timedelta
 from functools import reduce
-from typing import Union, Tuple, List, Dict
+from typing import Union, Tuple, List, Dict, Tuple
 
 import pandas as pd
 import numpy as np
 from overrides import overrides
 import torch
 import torch.nn as nn
-from sklearn.preprocess import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler
 from fastprogress import progress_bar as pb
 
-from ..base_model import BaseTimeseriesModel
-from ....processing import (
+from ...base_model import BaseTimeseriesModel
+from .....processing import (
     IStructuredDataProcessing,
-    LSTMRegressionDataProcessing,
+    LSTMDataProcessing,
 )
-from ....param_tuning import (
+from .....param_tuning import (
     IParamTuber,
     DefaultTuner
 )
@@ -60,44 +60,70 @@ class BILSTMRegression(BaseTimeseriesModel):
 
     def __init__(
         self,
-        data_processors: List[IStructuredDataProcessing] = [LSTMRegressionDataProcessing()],
+        data_processors: List[IStructuredDataProcessing] = [LSTMDataProcessing()],
         param_tuner: IParamTuber = DefaultTuner(),
     ):
         super(BILSTMRegression, self).__init__(data_processors, param_tuner)
         self._x_mms = MinMaxScaler((-0.5, 0.5))
         self._y_mms = MinMaxScaler((-0.5, 0.5))
+        self._model = None
 
     @overrides
     def _train(
         self,
-        y_train: pd.Series,
-        X_train: Union[pd.DataFrame, pd.Series] = None,
+        y_train: Union[pd.Series, np.ndarray],
+        X_train: Union[Union[pd.DataFrame, pd.Series], np.ndarray] = None,
         dt_now: datetime = None,
         model_params: Dict = {},
         **kwargs,
     ) -> None:
 
-        if dt_now is None:
+        if dt_now is None and (isinstance(y_train, pd.Series)):
             dt_now = y_train.index.max()
         self._dt_now = dt_now
 
         try:
-            seq_len = kwargs['seq_len']
+            self._seq_len = kwargs['seq_len']
         except Exception:
             raise Exception('Paramerer [seq_len] must be specified.')
         n_epoch = kwargs.get('n_epoch', 100)
-        hidden_dim = kwargs.get('hidden_dim', 32)
-        num_layers = kwargs.get('num_layers', 2)
-        lr = kwargs.get('lr', 0.005)
-        batch_size = kwargs.get('batch_size', 16)
+        try:
+            n_epoch = kwargs['n_epoch']
+        except Exception:
+            n_epoch = 30
+            Logger.w(self.__class__, f'Parameter [n_epoch] not specified, using default n_epoch : 30')
+        try:
+            self._hidden_dim = kwargs['hidden_dim']
+        except Exception:
+            self._hidden_dim = 32
+            Logger.w(self.__class__, f'Parameter [hidden_dim] not specified, using default hidden_dim : 32')
+        try:
+            self._num_layers = kwargs['num_layers']
+        except Exception:
+            self._num_layers = 2
+            Logger.w(self.__class__, f'Parameter [num_layers] not specified, using default num_layers : 2')
+        try:
+            lr = kwargs['lr']
+        except Exception:
+            lr = 0.005
+            Logger.w(self.__class__, f'Parameter [lr] not specified, using default lr : 0.005')
+        try:
+            batch_size = kwargs['batch_size']
+        except Exception:
+            batch_size = 16
+            Logger.w(self.__class__, f'Parameter [batch_size] not specified, using default batch_size : 16')
 
-        self._y_mms.fit(y_train.to_numpy().reshape(-1, 1))
-        xs_train, ys_train = self._create_xy_dataset(X_train, y_train, seq_len)
+        if not isinstance(y_train, np.ndarray):
+            y_train = y_train.to_numpy()
+        if not isinstance(X_train, np.ndarray):
+            X_train = X_train.to_numpy()
+        self._y_mms.fit(y_train.reshape(-1, 1))
+        xs_train, ys_train = self._create_xy_dataset(X_train, y_train, self._seq_len)
 
         self._model = _BILSTM(
-            input_dim=len(X_train.columns),
-            hidden_dim=hidden_dim,
-            num_layers=num_layers,
+            input_dim=X_train.shape[1],
+            hidden_dim=self._hidden_dim,
+            num_layers=self._num_layers,
             output_dim=1
         )
 
@@ -129,33 +155,50 @@ class BILSTMRegression(BaseTimeseriesModel):
     @overrides
     def _predict(
         self,
-        y: pd.Series = None,
-        X: Union[pd.DataFrame, pd.Series] = None,
-        pred_days: int = 30,
+        y: Union[pd.Series, np.ndarray],
+        X: Union[Union[pd.DataFrame, pd.Series], np.ndarray] = None,
+        pred_periods: int = 1,
         **kwargs,
-    ) -> pd.Series:
-        raise NotImplementedError
+    ) -> np.ndarray:
+        if pred_periods > 1:
+            Logger.w(
+                self.__class__.__name__,
+                'Multivariable LSTM model does not support forcast for pred_periods > 1, setting pred_periods = 1'
+            )
+        if self._model is None:
+            raise Exception('Model is not yet fit.')
+        if isinstance(y, pd.Series):
+            y = y.to_numpy()
+        if not isinstance(X, np.ndarray):
+            X = X.to_numpy()
+        xs, ys = self._create_xy_dataset(X, y, self._seq_len)
+        self._model.eval()
+        return self._model(xs).cpu().detach().numpy()
 
     def _create_xy_dataset(
         self,
-        df_X: pd.DataFrame,
-        sr_y: pd.Series,
+        X: np.ndarray,
+        sr_y: np.ndarray,
         seq_len: int
-    ) -> List[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         xs = []
         ys = []
-        for t in range(len(df_X)-seq_len):
-            xs.append(self._preprocess_input_x_sequence(df_X.iloc[t:t+seq_len, :], seq_len))
-            ys.append(self._preprocess_input_y_sequence(sr_y.iloc[t:t+seq_len], seq_len))
-        return torch.stack(xs, dim=0), torch.stack(ys, dim=0)
+        for t in range(len(X)-seq_len):
+            xs.append(self._preprocess_input_x_sequence(X[t:t+seq_len, :], seq_len))
+            if sr_y is not None:
+                ys.append(self._preprocess_input_y_sequence(sr_y[t:t+seq_len], seq_len))
+        ys = torch.stack(ys, dim=0) if len(ys) > 0 else None
+        xs = torch.stack(xs, dim=0)
+        return xs, ys
 
-    def _preprocess_input_x_sequence(self, df_x_seq: pd.DataFrame, seq_len: int) -> torch.Tensor:
-        x = self._x_mms.fit_transform(df_x_seq.to_numpy().reshape(-1, len(df_x_seq.columns))).reshape(seq_len, len(df_x_seq.columns))
-        x = torch.Tensor(x).view(seq_len, len(df_x_seq.columns))
+    def _preprocess_input_x_sequence(self, x_seq: np.ndarray, seq_len: int) -> torch.Tensor:
+        assert x_seq.ndim == 2
+        x = self._x_mms.fit_transform(x_seq.reshape(-1, x_seq.shape[1])).reshape(seq_len, x_seq.shape[1])
+        x = torch.Tensor(x).view(seq_len, x_seq.shape[1])
         return x
 
-    def _preprocess_input_y_sequence(self, sr_y_seq: pd.DataFrame, seq_len: int):
-        y = self._y_mms.transform(sr_y_seq.to_numpy().reshape(-1, 1)).flatten()
+    def _preprocess_input_y_sequence(self, y_seq: pd.DataFrame, seq_len: int):
+        y = self._y_mms.transform(y_seq.reshape(-1, 1)).flatten()
         y = torch.Tensor(y).view(seq_len, 1)
         return y
 
@@ -164,12 +207,13 @@ class BILSTMMultiTimescaleRegression(BaseTimeseriesModel):
 
     def __init__(
         self,
-        data_processors: List[IStructuredDataProcessing] = [LSTMRegressionDataProcessing()],
+        data_processors: List[IStructuredDataProcessing] = [LSTMDataProcessing()],
         param_tuner: IParamTuber = DefaultTuner(),
     ):
         super(BILSTMMultiTimescaleRegression, self).__init__(data_processors, param_tuner)
         self._x_mms = MinMaxScaler((-0.5, 0.5))
         self._y_mms = MinMaxScaler((-0.5, 0.5))
+        self._models = None
 
     @overrides
     def _train(
@@ -181,7 +225,7 @@ class BILSTMMultiTimescaleRegression(BaseTimeseriesModel):
         **kwargs,
     ) -> None:
 
-        if dt_now is None:
+        if dt_now is None and (isinstance(y_train, pd.Series)):
             dt_now = y_train.index.max()
         self._dt_now = dt_now
 
@@ -190,12 +234,37 @@ class BILSTMMultiTimescaleRegression(BaseTimeseriesModel):
         except Exception:
             time_window_sizes = [7, 20, 30, 60]
             Logger.w(self.__class__, f'Parameter [time_window_sizes] not specified, using default time_window_sizes : {time_window_sizes}')
-        n_epoch = kwargs.get('n_epoch', 100)
-        hidden_dim = kwargs.get('hidden_dim', 32)
-        num_layers = kwargs.get('num_layers', 2)
-        lr = kwargs.get('lr', 0.005)
-        batch_size = kwargs.get('batch_size', 16)
-        lstm_output_dim = kwargs.get('lstm_output_dim', 8)
+        try:
+            n_epoch = kwargs['n_epoch']
+        except Exception:
+            n_epoch = 30
+            Logger.w(self.__class__, f'Parameter [n_epoch] not specified, using default n_epoch : 30')
+        try:
+            hidden_dim = kwargs['hidden_dim']
+        except Exception:
+            hidden_dim = 32
+            Logger.w(self.__class__, f'Parameter [hidden_dim] not specified, using default hidden_dim : 32')
+        try:
+            num_layers = kwargs['num_layers']
+        except Exception:
+            num_layers = 2
+            Logger.w(self.__class__, f'Parameter [num_layers] not specified, using default num_layers : 2')
+        try:
+            lr = kwargs['lr']
+        except Exception:
+            lr = 0.005
+            Logger.w(self.__class__, f'Parameter [lr] not specified, using default lr : 0.005')
+        try:
+            batch_size = kwargs['batch_size']
+        except Exception:
+            batch_size = 16
+            Logger.w(self.__class__, f'Parameter [batch_size] not specified, using default batch_size : 16')
+        try:
+            lstm_output_dim = kwargs['lstm_output_dim']
+        except Exception:
+            lstm_output_dim = 8
+            Logger.w(self.__class__, f'Parameter [lstm_output_dim] not specified, using default lstm_output_dim : 8')
+
 
         self._y_mms.fit(y_train.to_numpy().reshape(-1, 1))
         xs_train_list = []
@@ -261,32 +330,49 @@ class BILSTMMultiTimescaleRegression(BaseTimeseriesModel):
     @overrides
     def _predict(
         self,
-        y: pd.Series = None,
-        X: Union[pd.DataFrame, pd.Series] = None,
-        pred_days: int = 30,
+        y: Union[pd.Series, np.ndarray],
+        X: Union[Union[pd.DataFrame, pd.Series], np.ndarray] = None,
+        pred_periods: int = 1,
         **kwargs,
-    ) -> pd.Series:
-        raise NotImplementedError
+    ) -> np.ndarray:
+        if pred_periods > 1:
+            Logger.w(
+                self.__class__.__name__,
+                'Multivariable LSTM model does not support forcast for pred_periods > 1, setting pred_periods = 1'
+            )
+        if self._models is None:
+            raise Exception('Model is not yet fit.')
+        if isinstance(y, pd.Series):
+            y = y.to_numpy()
+        if not isinstance(X, np.ndarray):
+            X = X.to_numpy()
+        xs, ys = self._create_xy_dataset(X, y, self._seq_len)
+        self._model.eval()
+        return self._model(xs).cpu().detach().numpy()
 
     def _create_xy_dataset(
         self,
-        df_X: pd.DataFrame,
-        sr_y: pd.Series,
+        X: np.ndarray,
+        sr_y: np.ndarray,
         seq_len: int
-    ) -> List[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         xs = []
         ys = []
-        for t in range(len(df_X)-seq_len):
-            xs.append(self._preprocess_input_x_sequence(df_X.iloc[t:t+seq_len, :], seq_len))
-            ys.append(self._preprocess_input_y_sequence(sr_y.iloc[t:t+seq_len], seq_len))
-        return torch.stack(xs, dim=0), torch.stack(ys, dim=0)
+        for t in range(len(X)-seq_len):
+            xs.append(self._preprocess_input_x_sequence(X[t:t+seq_len, :], seq_len))
+            if sr_y is not None:
+                ys.append(self._preprocess_input_y_sequence(sr_y[t:t+seq_len], seq_len))
+        ys = torch.stack(ys, dim=0) if len(ys) > 0 else None
+        xs = torch.stack(xs, dim=0)
+        return xs, ys
 
-    def _preprocess_input_x_sequence(self, df_x_seq: pd.DataFrame, seq_len: int) -> torch.Tensor:
-        x = self._x_mms.fit_transform(df_x_seq.to_numpy().reshape(-1, len(df_x_seq.columns))).reshape(seq_len, len(df_x_seq.columns))
-        x = torch.Tensor(x).view(seq_len, len(df_x_seq.columns))
+    def _preprocess_input_x_sequence(self, x_seq: np.ndarray, seq_len: int) -> torch.Tensor:
+        assert x_seq.ndim == 2
+        x = self._x_mms.fit_transform(x_seq.reshape(-1, x_seq.shape[1])).reshape(seq_len, x_seq.shape[1])
+        x = torch.Tensor(x).view(seq_len, x_seq.shape[1])
         return x
 
-    def _preprocess_input_y_sequence(self, sr_y_seq: pd.DataFrame, seq_len: int):
-        y = self._y_mms.transform(sr_y_seq.to_numpy().reshape(-1, 1)).flatten()
+    def _preprocess_input_y_sequence(self, y_seq: pd.DataFrame, seq_len: int):
+        y = self._y_mms.transform(y_seq.reshape(-1, 1)).flatten()
         y = torch.Tensor(y).view(seq_len, 1)
         return y

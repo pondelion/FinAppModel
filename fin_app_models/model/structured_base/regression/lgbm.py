@@ -39,20 +39,14 @@ class LGBMRegression(BaseRegressionModel):
         num_boost_round = kwargs.get('num_boost_round', 100)
         self._model = lgb.train(model_params, lgb_train, num_boost_round=num_boost_round)
 
-        self._X_col_names = X_train.columns
-
     @overrides
     def _predict(
         self,
         y: pd.Series = None,
         X: Union[pd.DataFrame, pd.Series] = None,
         **kwargs,
-    ) -> pd.Series:
-        sr_pred = pd.Series(
-            index=X.index,
-            data=self._model.predict(X).flatten()
-        )
-        return sr_pred
+    ) -> np.ndarray:
+        return self._model.predict(X).flatten()
 
     def feature_importance(self) -> pd.DataFrame:
         return pd.DataFrame(

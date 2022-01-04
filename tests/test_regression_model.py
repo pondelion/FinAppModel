@@ -8,6 +8,11 @@ from fin_app_models.model.structured_base.regression import (
     LassoRegression,
     LGBMRegression,
     CatBoostRegression,
+    SKMLPRegression,
+    KernelSVRRegression,
+)
+from fin_app_models.model.structured_base.timeseries_model.dnn.lstm import (
+    BILSTMRegression,
 )
 
 
@@ -65,7 +70,8 @@ class TestRegressionModel:
         lgbm_model = LGBMRegression()
         lgbm_model.train(
             y_train=dummy_data['y'],
-            X_train=dummy_data['X']
+            X_train=dummy_data['X'],
+            auto_param_tuning=False,
         )
         pred = lgbm_model.predict(X=dummy_data['X'])
         print(pred)
@@ -75,7 +81,40 @@ class TestRegressionModel:
         catboost_model = CatBoostRegression()
         catboost_model.train(
             y_train=dummy_data['y'],
-            X_train=dummy_data['X']
+            X_train=dummy_data['X'],
+            auto_param_tuning=False,
         )
         pred = catboost_model.predict(X=dummy_data['X'])
+        print(pred)
+
+    def test_kernel_svm_regression(self, dummy_data):
+        svr_model = KernelSVRRegression()
+        svr_model.train(
+            y_train=dummy_data['y'],
+            X_train=dummy_data['X']
+        )
+        pred = svr_model.predict(X=dummy_data['X'])
+        print(pred)
+
+    def test_skmlp_regression(self, dummy_data):
+        skmlp_model = SKMLPRegression()
+        skmlp_model.train(
+            y_train=dummy_data['y'],
+            X_train=dummy_data['X']
+        )
+        pred = skmlp_model.predict(X=dummy_data['X'])
+        print(pred)
+
+    def test_bilstm_regression(self, dummy_data):
+        bilstm_model = BILSTMRegression()
+        bilstm_model.train(
+            y_train=dummy_data['y'],
+            X_train=dummy_data['X'],
+            seq_len=64,
+            n_epoch=5,
+        )
+        pred = bilstm_model.predict(
+            # y=dummy_data['y'],
+            X=dummy_data['X']
+        )
         print(pred)

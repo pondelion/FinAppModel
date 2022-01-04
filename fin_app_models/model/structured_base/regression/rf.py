@@ -38,9 +38,7 @@ class RandomForestRegression(BaseRegressionModel):
         random_state = kwargs.get('random_state', 42)
         model_params['random_state'] = random_state
         self._model = RandomForestRegressor(**model_params)
-
         self._model.fit(X_train, y_train)
-        self._X_col_names = X_train.columns
 
     @overrides
     def _predict(
@@ -48,9 +46,5 @@ class RandomForestRegression(BaseRegressionModel):
         y: pd.Series = None,
         X: Union[pd.DataFrame, pd.Series] = None,
         **kwargs,
-    ) -> pd.Series:
-        sr_pred = pd.Series(
-            index=X.index,
-            data=self._model.predict(X).flatten()
-        )
-        return sr_pred
+    ) -> np.ndarray:
+        return self._model.predict(X).flatten()

@@ -15,6 +15,7 @@ colorama==0.4.4
 colorlog==4.7.2
 cycler==0.10.0
 Cython==0.29.21
+fastprogress==1.0.0
 #-e git+git@github.com:pondelion/FinAppModel.git@f11cfaf77dcb992887eba0766c599690f7d0a00a#egg=fin_app_model
 fsspec==0.8.5
 graphviz==0.16

@@ -35,11 +35,8 @@ class LinearRegression(BaseRegressionModel):
         model_params: Dict = {},
         **kwargs,
     ) -> None:
-
         self._model = linear_model.LinearRegression(**model_params)
-
         self._model.fit(X_train, y_train)
-        self._X_col_names = X_train.columns
 
     @overrides
     def _predict(
@@ -47,12 +44,8 @@ class LinearRegression(BaseRegressionModel):
         y: pd.Series = None,
         X: Union[pd.DataFrame, pd.Series] = None,
         **kwargs,
-    ) -> pd.Series:
-        sr_pred = pd.Series(
-            index=X.index,
-            data=self._model.predict(X).flatten()
-        )
-        return sr_pred
+    ) -> np.ndarray:
+        return self._model.predict(X).flatten()
 
     def __str__(self):
         if self._model is None:

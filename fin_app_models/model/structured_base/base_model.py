@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Union, Dict, List
 
 import pandas as pd
+import numpy as np
 
 from ...processing import (
     IStructuredDataProcessing,
@@ -39,6 +40,8 @@ class BaseRegressionModel(metaclass=ABCMeta):
     ) -> None:
         X_train_preprocessed = X_train.copy() if X_train is not None else None
         y_train_preprocessed = y_train.copy()
+
+        self._X_col_names = X_train_preprocessed.columns
 
         if dt_now is not None:
             X_train_preprocessed = X_train_preprocessed[
@@ -81,6 +84,7 @@ class BaseRegressionModel(metaclass=ABCMeta):
     ) -> pd.Series:
         X_preprocessed = X.copy() if X is not None else None
         y_preprocessed = y.copy() if y is not None else None
+        self._X_index = X_preprocessed.index
         for dp in self._data_processors:
             X_preprocessed, y_preprocessed = dp.preprocess_cols(
                 X_preprocessed, y_preprocessed
@@ -97,8 +101,8 @@ class BaseRegressionModel(metaclass=ABCMeta):
     @abstractmethod
     def _train(
         self,
-        y_train: pd.Series,
-        X_train: Union[pd.DataFrame, pd.Series] = None,
+        y_train: Union[pd.Series, np.ndarray],
+        X_train: Union[Union[pd.DataFrame, pd.Series], np.ndarray] = None,
         dt_now: datetime = None,
         model_params: Dict = {},
         **kwargs,
@@ -108,8 +112,8 @@ class BaseRegressionModel(metaclass=ABCMeta):
     @abstractmethod
     def _predict(
         self,
-        y: pd.Series = None,
-        X: Union[pd.DataFrame, pd.Series] = None,
+        y: Union[pd.Series, np.ndarray],
+        X: Union[Union[pd.DataFrame, pd.Series], np.ndarray] = None,
         **kwargs,
     ) -> pd.Series:
         raise NotImplementedError
@@ -129,7 +133,7 @@ class BaseBinClassificationModel(metaclass=ABCMeta):
         y_train: pd.Series
     ) -> None:
         raise NotImplementedError
-    
+
     @abstractmethod
     def predict(
         self,
@@ -235,7 +239,7 @@ class BaseTimeseriesModel(metaclass=ABCMeta):
         self,
         y: pd.Series = None,
         X: Union[pd.DataFrame, pd.Series] = None,
-        pred_days: int = 30,
+        pred_periods: int = 30,
         **kwargs,
     ) -> pd.Series:
         X_preprocessed = X.copy() if X is not None else None
@@ -247,7 +251,7 @@ class BaseTimeseriesModel(metaclass=ABCMeta):
         sr_pred = self._predict(
             y=y_preprocessed,
             X=X_preprocessed,
-            pred_days=pred_days,
+            pred_periods=pred_periods,
             **kwargs
         )
         for dp in self._data_processors[::-1]:
@@ -264,13 +268,13 @@ class BaseTimeseriesModel(metaclass=ABCMeta):
         **kwargs,
     ) -> None:
         raise NotImplementedError
-    
+
     @abstractmethod
     def _predict(
         self,
         y: pd.Series = None,
         X: Union[pd.DataFrame, pd.Series] = None,
-        pred_days: int = 30,
+        pred_periods: int = 30,
         **kwargs,
     ) -> pd.Series:
         raise NotImplementedError

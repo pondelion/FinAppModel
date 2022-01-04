@@ -17,7 +17,7 @@ class TestTimeseriesModel:
 
         tlr_model = TrendLinearRegression()
         tlr_model.train(y_train=sr_ts, trend_interval_days=365*3)
-        sr_pred = tlr_model.predict(pred_days=40)
+        sr_pred = tlr_model.predict(pred_periods=40)
         assert isinstance(sr_pred, pd.Series)
         assert len(sr_pred)==40+1
         print(sr_pred)

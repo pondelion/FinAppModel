@@ -16,6 +16,7 @@ catboost = "*"
 boto3 = "*"
 fsspec = "*"
 s3fs = "*"
+fastprogress = "*"
 
 [dev-packages]
 pytest = "*"

@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Tuple, Union, List
 
 from overrides import overrides
 import pandas as pd
@@ -10,7 +10,8 @@ from ..entity.timeseries_data import TimeseriesData
 
 class KNNDataProcessing(IStructuredDataProcessing):
 
-    def __init__(self):
+    def __init__(self, target_X_cols: List[str] = None):
+        super().__init__(target_X_cols)
         self._ss = StandardScaler()
 
     @overrides

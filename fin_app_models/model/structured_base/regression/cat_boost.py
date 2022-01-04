@@ -37,13 +37,11 @@ class CatBoostRegression(BaseRegressionModel):
     ) -> None:
         self._model = catboost.CatBoostRegressor(**model_params)
         early_stopping_rounds = kwargs.get('early_stopping_rounds', 50)
-
         self._model.fit(
             X_train, y_train,
             early_stopping_rounds=early_stopping_rounds,
             verbose_eval=False,
         )
-        self._X_col_names = X_train.columns
 
     @overrides
     def _predict(
@@ -51,9 +49,5 @@ class CatBoostRegression(BaseRegressionModel):
         y: pd.Series = None,
         X: Union[pd.DataFrame, pd.Series] = None,
         **kwargs,
-    ) -> pd.Series:
-        sr_pred = pd.Series(
-            index=X.index,
-            data=self._model.predict(X).flatten()
-        )
-        return sr_pred
+    ) -> np.ndarray:
+        return self._model.predict(X).flatten()

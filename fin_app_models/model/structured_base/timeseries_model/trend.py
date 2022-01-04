@@ -22,7 +22,7 @@ class TrendLinearRegression(BaseTimeseriesModel):
     Example:
     >>> tlr_model = TrendLinearRegression()
     >>> tlr_model.train(y_train=sr_ts, trend_interval_days=365*3)
-    >>> sr_pred = tlr_model.predict(pred_days=900)
+    >>> sr_pred = tlr_model.predict(pred_periods=900)
     """
 
     def __init__(
@@ -58,10 +58,10 @@ class TrendLinearRegression(BaseTimeseriesModel):
         self,
         y: pd.Series = None,
         X: Union[pd.DataFrame, pd.Series] = None,
-        pred_days: int = 30,
+        pred_periods: int = 30,
         **kwargs,
     ) -> pd.Series:
-        dts = pd.date_range(self._dt_now, self._dt_now+timedelta(days=pred_days))
+        dts = pd.date_range(self._dt_now, self._dt_now+timedelta(days=pred_periods))
 
         xs = np.arange(len(dts))
         ys = self._slope * xs + self._intercept

@@ -15,3 +15,4 @@ from .nn import SKMLPDataProcessing
 from .knn import KNNDataProcessing
 from .lgbm import LGBMDataProcessing
 from .cat_boost import CatBoostDataProcessing
+from .lstm import LSTMDataProcessing
