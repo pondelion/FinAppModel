@@ -29,8 +29,10 @@ jobs:
         ls /usr/include
         export CPATH=$CPATH:/usr/include:$(pwd)
         export LIBRARY_PATH=$LIBRARY_PATH:/usr/lib:$(pwd)/ta-lib/src/.libs
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pipenv install --skip-lock --dev -e .
+        # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        # pipenv install --skip-lock --dev -e .
+        pip install -r requirements.txt
+        pip install -e .
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names

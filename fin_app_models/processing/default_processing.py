@@ -6,7 +6,8 @@ import pandas as pd
 from .base_processing import IStructuredDataProcessing
 
 
-class DefaultStructuredDataProcessing(IStructuredDataProcessing):
+
+class EmptyStructuredDataProcessing(IStructuredDataProcessing):
 
     @overrides
     def preprocess(
@@ -22,3 +23,6 @@ class DefaultStructuredDataProcessing(IStructuredDataProcessing):
         y_train: pd.Series
     ) -> pd.Series:
         return y_train
+
+
+DefaultStructuredDataProcessing = EmptyStructuredDataProcessing

@@ -34,6 +34,7 @@ class BaseRegressionModel(metaclass=ABCMeta):
         dt_now: datetime = None,
         model_params: Dict = {},
         auto_param_tuning: bool = True,
+        daily_interpolation: bool = True,
         **kwargs,
     ) -> None:
         X_train_preprocessed = X_train.copy() if X_train is not None else None
@@ -56,7 +57,7 @@ class BaseRegressionModel(metaclass=ABCMeta):
             self._best_params = self._param_tuner.param_tuning(
                 y_train=y_train_preprocessed,
                 X_train=X_train_preprocessed,
-                dt_now=dt_now, 
+                dt_now=dt_now,
             )
             Logger.d(self.__class__.__name__, 'Done tuning parameters')
             Logger.d(self.__class__.__name__, f'best_pramas : {self._best_params}')
@@ -68,6 +69,7 @@ class BaseRegressionModel(metaclass=ABCMeta):
             X_train=X_train_preprocessed,
             dt_now=dt_now,
             model_params=self._best_params,
+            daily_interpolation=daily_interpolation,
             **kwargs
         )
 
@@ -102,7 +104,7 @@ class BaseRegressionModel(metaclass=ABCMeta):
         **kwargs,
     ) -> None:
         raise NotImplementedError
-    
+
     @abstractmethod
     def _predict(
         self,

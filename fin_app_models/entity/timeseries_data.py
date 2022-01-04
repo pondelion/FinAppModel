@@ -12,7 +12,7 @@ class TimeseriesData:
     ):
         if self._validate_index_dtype(ts) is False:
             raise Exception('Only datetime index DataFrame/Series are supported')
-        
+
         if isinstance(ts, pd.DataFrame):
             pd_ts = pd.DataFrame
         elif isinstance(ts, pd.Series):

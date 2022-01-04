@@ -2,7 +2,7 @@ fin_app_model.egg-info
 .pytest_cache
 log/*
 ta-lib
-requirements.txt
+# requirements.txt
 Pipfile.lock
 fin_app_models/config/*.yml
 catboost_info

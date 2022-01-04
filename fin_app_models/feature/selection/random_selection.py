@@ -11,9 +11,9 @@ from ..creation.single_ts import create_single_ts_features
 def random_feat_select(
     ohlc_df_dict: Dict[str, pd.DataFrame],
     single_ts_sr_dict: Dict[str, pd.Series],
-    min_select_tss: int = 2,
+    min_select_tss: int = 1,
     max_select_tss: int = 40,
-    min_select_feats: int = 2,
+    min_select_feats: int = 1,
     max_select_feats: int = 200,
     close_col_name: str = 'close',
     open_col_name: str = 'open',
@@ -44,24 +44,32 @@ def random_feat_select(
         col_name_prefix=str(key),
     ) for key, sr in random_single_ts_srs]
 
-    min_dt = min(
-        min([df.index.min() for df in ohlc_feat_dfs]) if len(ohlc_feat_dfs) > 0 else date(MAXYEAR, 1, 1),
-        min([df.index.min() for df in single_ts_feat_dfs]) if len(single_ts_feat_dfs) > 0 else date(MAXYEAR, 1, 1),
-    )
-    max_dt = max(
-        max([df.index.max() for df in ohlc_feat_dfs]) if len(ohlc_feat_dfs) > 0 else date(MINYEAR, 1, 1),
-        max([df.index.max() for df in single_ts_feat_dfs]) if len(single_ts_feat_dfs) > 0 else date(MINYEAR, 1, 1),
-    )
+    # min_dt = min(
+    #     min([df.index.min() for df in ohlc_feat_dfs]) if len(ohlc_feat_dfs) > 0 else date(MAXYEAR, 1, 1),
+    #     min([df.index.min() for df in single_ts_feat_dfs]) if len(single_ts_feat_dfs) > 0 else date(MAXYEAR, 1, 1),
+    # )
+    # max_dt = max(
+    #     max([df.index.max() for df in ohlc_feat_dfs]) if len(ohlc_feat_dfs) > 0 else date(MINYEAR, 1, 1),
+    #     max([df.index.max() for df in single_ts_feat_dfs]) if len(single_ts_feat_dfs) > 0 else date(MINYEAR, 1, 1),
+    # )
 
-    df_random_feats = pd.DataFrame(
-        index=pd.date_range(min_dt, max_dt)
-    )
+    # df_random_feats = pd.DataFrame(
+    #     index=pd.date_range(min_dt, max_dt)
+    # )
+    df_random_feats = None
 
     for df in ohlc_feat_dfs+single_ts_feat_dfs:
-        df_random_feats = pd.merge(
-            df_random_feats, df,
-            left_index=True, right_index=True
-        )
+        # df_random_feats = pd.merge(
+        #     df_random_feats, df,
+        #     left_index=True, right_index=True
+        # )
+        if df_random_feats is None:
+            df_random_feats = df
+        else:
+            df_random_feats = pd.merge(
+                df_random_feats, df, how='outer',
+                left_index=True, right_index=True
+            )
 
     max_select_feats = min(
         max_select_feats, len(df_random_feats.columns)
