@@ -5,6 +5,8 @@ import pandas as pd
 import numpy as np
 from talib import RSI, BBANDS, MACD, NATR, ATR, PPO, APO, CMO
 
+from .deviation import deviation_from_target_feats
+
 
 def create_single_ts_features(
     sr_ts: pd.Series,
@@ -15,6 +17,7 @@ def create_single_ts_features(
     basic_stats_period: int = 14,
     atr_period: int = 14,
     return_lags: List[int] = [1, 3, 7, 10, 20, 30, 60],
+    include_deviation: bool = True,
     col_name_prefix: str = None,
 ) -> pd.DataFrame:
     feature_dfs = [sr_ts.to_frame()]
@@ -36,6 +39,10 @@ def create_single_ts_features(
     feature_dfs.append(periodic(sr_ts))
 
     df_feats = pd.concat(feature_dfs, axis=1)
+
+    if include_deviation:
+        df_deviation = deviation_from_target_feats(df_feats, base_col=sr_ts.name)
+        df_feats = pd.concat([df_feats, df_deviation], axis=1)
 
     if col_name_prefix is not None:
         df_feats.columns = [f'{col_name_prefix}_{col_name}' for col_name in df_feats.columns]
