@@ -52,8 +52,8 @@ class _BILSTM(nn.Module):
 
     def forward(self, x):
         self._lstm.flatten_parameters()
-        out, hidden = self._lstm(x)
-        return self._linear(out[:, :, :])
+        out, hidden = self._lstm(x)  # out => (batch_size, seq_len, hidden_dim)
+        return self._linear(out[:, :, :])  # (batch_size, seq_len, hidden_dim) => (batch_size, seq_len, output_dim)
 
 
 class BILSTMRegression(BaseTimeseriesModel):
@@ -151,6 +151,8 @@ class BILSTMRegression(BaseTimeseriesModel):
                 losses.append(loss.item())
 
             loss_history.append(sum(losses) / len(losses))
+        self._loss_history = loss_history
+        return loss_history
 
     @overrides
     def _predict(
@@ -173,7 +175,8 @@ class BILSTMRegression(BaseTimeseriesModel):
             X = X.to_numpy()
         xs, ys = self._create_xy_dataset(X, y, self._seq_len)
         self._model.eval()
-        return self._model(xs).cpu().detach().numpy()
+        out = self._model(xs)  # (BATCH_SIZE, SEQ_LEN, OUT_DIM(1))
+        return out[:, -1, :].cpu().detach().numpy().flatten()
 
     def _create_xy_dataset(
         self,
@@ -348,7 +351,8 @@ class BILSTMMultiTimescaleRegression(BaseTimeseriesModel):
             X = X.to_numpy()
         xs, ys = self._create_xy_dataset(X, y, self._seq_len)
         self._model.eval()
-        return self._model(xs).cpu().detach().numpy()
+        out = self._model(xs)  # (BATCH_SIZE, SEQ_LEN, OUT_DIM(1))
+        return out[:, -1, :].cpu().detach().numpy().flatten()
 
     def _create_xy_dataset(
         self,
