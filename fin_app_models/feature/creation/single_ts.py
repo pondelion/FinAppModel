@@ -20,7 +20,7 @@ def create_single_ts_features(
     include_deviation: bool = True,
     col_name_prefix: str = None,
 ) -> pd.DataFrame:
-    feature_dfs = [sr_ts.to_frame() is sr_ts.name if not None else sr_ts.to_frame('_base_feat_')]
+    feature_dfs = [sr_ts.to_frame() if sr_ts.name is not None else sr_ts.to_frame('_base_feat_')]
     feature_dfs.append(rsi(sr_ts).to_frame('rsi'))
     feature_dfs.append(macd(sr_ts, macd_fastperiod, macd_slowperiod, macd_signalperiod).to_frame('macd'))
     for bbp in bb_periods:
