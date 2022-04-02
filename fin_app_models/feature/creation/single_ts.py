@@ -41,7 +41,9 @@ def create_single_ts_features(
     df_feats = pd.concat(feature_dfs, axis=1)
 
     if include_deviation:
-        df_deviation = deviation_from_target_feats(df_feats, base_col=sr_ts.name)
+        df_deviation = deviation_from_target_feats(
+            df_feats, base_col=sr_ts.name if sr_ts.name is not None else '_base_feat_'
+        )
         df_feats = pd.concat([df_feats, df_deviation], axis=1)
 
     if col_name_prefix is not None:

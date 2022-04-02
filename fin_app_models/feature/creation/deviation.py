@@ -7,6 +7,7 @@ def deviation_from_target_feats(df, base_col: str, target_cols: Optional[List[st
         target_cols.remove(base_col)
     df_deviation = df[target_cols].div(df[base_col], axis=0)
     df_deviation.columns = [f'deviation_from_{col_name}' for col_name in df_deviation.columns]
+    return df_deviation
 
 
 def deviation_from_sector_mean():

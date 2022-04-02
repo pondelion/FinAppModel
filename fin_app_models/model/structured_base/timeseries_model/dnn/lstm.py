@@ -91,27 +91,27 @@ class BILSTMRegression(BaseTimeseriesModel):
             n_epoch = kwargs['n_epoch']
         except Exception:
             n_epoch = 30
-            Logger.w(self.__class__, f'Parameter [n_epoch] not specified, using default n_epoch : 30')
+            Logger.w(self.__class__.__name__, f'Parameter [n_epoch] not specified, using default n_epoch : 30')
         try:
             self._hidden_dim = kwargs['hidden_dim']
         except Exception:
             self._hidden_dim = 32
-            Logger.w(self.__class__, f'Parameter [hidden_dim] not specified, using default hidden_dim : 32')
+            Logger.w(self.__class__.__name__, f'Parameter [hidden_dim] not specified, using default hidden_dim : 32')
         try:
             self._num_layers = kwargs['num_layers']
         except Exception:
             self._num_layers = 2
-            Logger.w(self.__class__, f'Parameter [num_layers] not specified, using default num_layers : 2')
+            Logger.w(self.__class__.__name__, f'Parameter [num_layers] not specified, using default num_layers : 2')
         try:
             lr = kwargs['lr']
         except Exception:
             lr = 0.005
-            Logger.w(self.__class__, f'Parameter [lr] not specified, using default lr : 0.005')
+            Logger.w(self.__class__.__name__, f'Parameter [lr] not specified, using default lr : 0.005')
         try:
             batch_size = kwargs['batch_size']
         except Exception:
             batch_size = 16
-            Logger.w(self.__class__, f'Parameter [batch_size] not specified, using default batch_size : 16')
+            Logger.w(self.__class__.__name__, f'Parameter [batch_size] not specified, using default batch_size : 16')
 
         if not isinstance(y_train, np.ndarray):
             y_train = y_train.to_numpy()
@@ -236,37 +236,37 @@ class BILSTMMultiTimescaleRegression(BaseTimeseriesModel):
             time_window_sizes = kwargs['time_window_sizes']
         except Exception:
             time_window_sizes = [7, 20, 30, 60]
-            Logger.w(self.__class__, f'Parameter [time_window_sizes] not specified, using default time_window_sizes : {time_window_sizes}')
+            Logger.w(self.__class__.__name__, f'Parameter [time_window_sizes] not specified, using default time_window_sizes : {time_window_sizes}')
         try:
             n_epoch = kwargs['n_epoch']
         except Exception:
             n_epoch = 30
-            Logger.w(self.__class__, f'Parameter [n_epoch] not specified, using default n_epoch : 30')
+            Logger.w(self.__class__.__name__, f'Parameter [n_epoch] not specified, using default n_epoch : 30')
         try:
             hidden_dim = kwargs['hidden_dim']
         except Exception:
             hidden_dim = 32
-            Logger.w(self.__class__, f'Parameter [hidden_dim] not specified, using default hidden_dim : 32')
+            Logger.w(self.__class__.__name__, f'Parameter [hidden_dim] not specified, using default hidden_dim : 32')
         try:
             num_layers = kwargs['num_layers']
         except Exception:
             num_layers = 2
-            Logger.w(self.__class__, f'Parameter [num_layers] not specified, using default num_layers : 2')
+            Logger.w(self.__class__.__name__, f'Parameter [num_layers] not specified, using default num_layers : 2')
         try:
             lr = kwargs['lr']
         except Exception:
             lr = 0.005
-            Logger.w(self.__class__, f'Parameter [lr] not specified, using default lr : 0.005')
+            Logger.w(self.__class__.__name__, f'Parameter [lr] not specified, using default lr : 0.005')
         try:
             batch_size = kwargs['batch_size']
         except Exception:
             batch_size = 16
-            Logger.w(self.__class__, f'Parameter [batch_size] not specified, using default batch_size : 16')
+            Logger.w(self.__class__.__name__, f'Parameter [batch_size] not specified, using default batch_size : 16')
         try:
             lstm_output_dim = kwargs['lstm_output_dim']
         except Exception:
             lstm_output_dim = 8
-            Logger.w(self.__class__, f'Parameter [lstm_output_dim] not specified, using default lstm_output_dim : 8')
+            Logger.w(self.__class__.__name__, f'Parameter [lstm_output_dim] not specified, using default lstm_output_dim : 8')
 
 
         self._y_mms.fit(y_train.to_numpy().reshape(-1, 1))
