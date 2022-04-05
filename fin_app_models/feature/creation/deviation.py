@@ -5,8 +5,9 @@ def deviation_from_target_feats(df, base_col: str, target_cols: Optional[List[st
     if target_cols is None:
         target_cols = df.columns.tolist()
         target_cols.remove(base_col)
-    df_deviation = df[target_cols].div(df[base_col], axis=0)
+    df_deviation = df[target_cols].div(df[base_col]+1e-10, axis=0)
     df_deviation.columns = [f'deviation_from_{col_name}' for col_name in df_deviation.columns]
+    df_deviation.fillna(0)
     return df_deviation
 
 
