@@ -118,7 +118,10 @@ def returns(
     return_srs = {}
 
     for lag in lags:
-        return_srs[f'return_lag{lag}'] = ts.add(ts.min()+1).pct_change(lag).add(1).pow(1/lag).sub(1)
+        if ts.min() > 0:
+            return_srs[f'return_lag{lag}'] = ts.pct_change(lag).add(1).pow(1/lag).sub(1)
+        else:
+            return_srs[f'return_lag{lag}'] = ts.add(-ts.min()+1).pct_change(lag).add(1).pow(1/lag).sub(1)
 
     return pd.DataFrame(return_srs)
 
