@@ -93,21 +93,24 @@ def repeative_high_importance_feats_search_reg(
     y = df_merged['target']
     feat_len = len(X.columns)
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.3, shuffle=False)
-    prev_selected_feats = None
+    # prev_selected_feats = None
     inportance_dfs = []
     for _ in pb(range(n_repeats)):
         df_perm_importance = permutation_importance_reg(X_train, y_train, X_val, y_val, n_repeat=3)
-        inportance_dfs.append(df_perm_importance[:int(feat_len*(1-replace_rate))])
-        if (df_perm_importance['mean_perm_score']==0).all() and prev_selected_feats is not None:
-            selected_feats = copy(prev_selected_feats)
-        else:
-            # Remain feature_num*(1-replace_rate) high importance features as next candisates.
-            selected_feats = list(df_perm_importance[:int(feat_len*(1-replace_rate))].index)
+        inportance_dfs.append(df_perm_importance)
+        # inportance_dfs.append(df_perm_importance[:int(feat_len*(1-replace_rate))])
+        # if (df_perm_importance['mean_perm_score']==0).all() and prev_selected_feats is not None:
+        #     selected_feats = copy(prev_selected_feats)
+        # else:
+        #     # Remain feature_num*(1-replace_rate) high importance features as next candisates.
+        #     selected_feats = list(df_perm_importance[:int(feat_len*(1-replace_rate))].index)
+        # Remain feature_num*(1-replace_rate) high importance features as next candisates.
+        selected_feats = list(df_perm_importance[:int(feat_len*(1-replace_rate))].index)
         df_condiate_feats = pd.merge(
             sr_y.rename('target'), df_merged[selected_feats],
             left_index=True, right_index=True,
         ).dropna()
-        prev_selected_feats = copy(selected_feats)
+        # prev_selected_feats = copy(selected_feats)
         # Adopt feature_num*(replace_rate) newly created features as next candidates.
         df_new_random_feats = random_feat_select(
             ohlc_df_dict=ohlc_ts_X_df_dict,
