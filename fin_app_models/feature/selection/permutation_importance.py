@@ -32,10 +32,13 @@ def permutation_importance_reg(X_train, y_train, X_val = None, y_val = None, mod
     perm_scores = {}
     for i in range(n_repeat):
         ith_perm_scores = []
-        replace_vals = np.random.randn(len(X_val))
+        # replace_vals = np.random.randn(len(X_val))
         for col in X_val.columns:
             X_val_perm = X_val.copy()
             # replace_vals = X_val_perm[col].sample(frac=1).values
+            mean = X_val_perm[col].mean()
+            std = X_val_perm[col].std()
+            replace_vals = np.random.normal(mean, std, len(X_val))
             X_val_perm[col] = replace_vals
             val_preds = model.predict(X_val_perm)
             perm_score = metric(np.array(y_val).flatten(), val_preds.flatten())
