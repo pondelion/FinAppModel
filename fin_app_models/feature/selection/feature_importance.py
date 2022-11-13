@@ -97,7 +97,7 @@ def lgbm_reg_random_feats_search(
             df_condiate_feats, df_new_random_feats[new_feats],
             left_index=True, right_index=True,
         ).dropna()
-        X = df_merged[selected_feats+list(df_new_random_feats.columns)]
+        X = df_merged[selected_feats+new_feats]
         y = df_merged['target']
 
     return inportance_dfs[::-1], rmses

@@ -83,7 +83,9 @@ def repeative_high_importance_feats_search_reg(
     df_merged = pd.merge(
         sr_y.rename('target'), df_random_feats,
         left_index=True, right_index=True,
-    ).dropna()
+    )#.dropna()
+    df_merged = df_merged[~(df_merged[df_random_feats.columns].isnull().all(axis=1))]
+    df_merged.fillna(0, inplace=True)
     X = df_merged[df_random_feats.columns]
     y = df_merged['target']
     feat_len = len(X.columns)
@@ -117,11 +119,14 @@ def repeative_high_importance_feats_search_reg(
             low_col_name=low_col_name,
         )
         new_feats = list(set(df_new_random_feats.columns)-set(selected_feats))  # delete duplicates
+        new_feats = new_feats[:int(feat_len*(replace_rate))]
         df_merged = pd.merge(
             df_condiate_feats, df_new_random_feats[new_feats],
             left_index=True, right_index=True,
-        ).dropna()
-        X = df_merged[selected_feats+list(df_new_random_feats.columns)]
+        )#.dropna()
+        df_merged = df_merged[~(df_merged[selected_feats+new_feats].isnull().all(axis=1))]
+        df_merged.fillna(0, inplace=True)
+        X = df_merged[selected_feats+new_feats]
         y = df_merged['target']
         X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.3, shuffle=False)
 
