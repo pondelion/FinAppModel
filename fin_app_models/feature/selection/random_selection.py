@@ -74,6 +74,7 @@ def random_feat_select(
     max_select_feats = min(
         max_select_feats, len(df_random_feats.columns)
     )
+    min_select_feats = min(min_select_feats, max_select_feats)
     n_select_feats = random.randint(
         min_select_feats, max_select_feats
     )

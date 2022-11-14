@@ -87,6 +87,7 @@ def repeative_high_importance_feats_search_reg(
         sr_y.rename('target'), df_random_feats,
         left_index=True, right_index=True,
     )#.dropna()
+    df_merged.dropna(subset=['target'], inplace=True)
     df_merged = df_merged[~(df_merged[df_random_feats.columns].isnull().all(axis=1))]
     df_merged.fillna(0, inplace=True)
     X = df_merged[df_random_feats.columns]
@@ -130,6 +131,7 @@ def repeative_high_importance_feats_search_reg(
             df_condiate_feats, df_new_random_feats[new_feats],
             left_index=True, right_index=True,
         )#.dropna()
+        df_merged.dropna(subset=['target'], inplace=True)
         df_merged = df_merged[~(df_merged[selected_feats+new_feats].isnull().all(axis=1))]
         df_merged.fillna(0, inplace=True)
         X = df_merged[selected_feats+new_feats]
