@@ -11,18 +11,24 @@ from ..creation.single_ts import create_single_ts_features
 def random_feat_select(
     ohlc_df_dict: Dict[str, pd.DataFrame],
     single_ts_sr_dict: Dict[str, pd.Series],
-    min_select_tss: int = 1,
-    max_select_tss: int = 40,
-    min_select_feats: int = 1,
+    min_select_tss: int = None,
+    max_select_tss: int = None,
+    min_select_feats: int = 20,
     max_select_feats: int = 200,
     close_col_name: str = 'close',
     open_col_name: str = 'open',
     high_col_name: str = 'high',
     low_col_name: str = 'low',
 ) -> pd.DataFrame:
-    max_select_tss = min(
-        max_select_tss, len(ohlc_df_dict)+len(single_ts_sr_dict)
-    )
+    if max_select_tss is not None:
+        max_select_tss = min(
+            max_select_tss, len(ohlc_df_dict)+len(single_ts_sr_dict)
+        )
+    else:
+        max_select_tss = len(ohlc_df_dict)+len(single_ts_sr_dict)
+    if min_select_tss is None:
+        min_select_tss = max_select_tss
+    min_select_tss = min(min_select_tss, max_select_tss)
     n_select_tss = random.randint(
         min_select_tss, max_select_tss
     )
@@ -39,10 +45,15 @@ def random_feat_select(
         sr_low=df[low_col_name],
         col_name_prefix=str(key),
     ) for key, df in random_ohlc_dfs]
+    # ohlc_feat_dfs += [
+    #     df[[close_col_name, open_col_name, high_col_name, low_col_name]].add_prefix(f'{key}_')
+    #     for key, df in random_ohlc_dfs
+    # ]
     single_ts_feat_dfs = [create_single_ts_features(
         sr_ts=sr,
         col_name_prefix=str(key),
     ) for key, sr in random_single_ts_srs]
+    # single_ts_feat_dfs += [sr.to_frame(str(key)) for key, sr in random_single_ts_srs]
 
     # min_dt = min(
     #     min([df.index.min() for df in ohlc_feat_dfs]) if len(ohlc_feat_dfs) > 0 else date(MAXYEAR, 1, 1),

@@ -60,9 +60,9 @@ def repeative_high_importance_feats_search_reg(
     sr_y: pd.Series,
     ohlc_ts_X_df_dict: Dict[str, pd.DataFrame],
     single_ts_X_sr_dict: Dict[str, pd.Series],
-    min_select_tss: int = 2,
-    max_select_tss: int = 40,
-    min_select_feats: int = 2,
+    min_select_tss: int = None,
+    max_select_tss: int = None,
+    min_select_feats: int = 20,
     max_select_feats: int = 200,
     close_col_name: str = 'close',
     open_col_name: str = 'open',
@@ -96,6 +96,8 @@ def repeative_high_importance_feats_search_reg(
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.3, shuffle=False)
     # prev_selected_feats = None
     inportance_dfs = []
+    min_loss = np.inf
+    prev_selected_feats = None
     for _ in pb(range(n_repeats)):
         df_perm_importance = permutation_importance_reg(X_train, y_train, X_val, y_val, n_repeat=3)
         inportance_dfs.append(df_perm_importance)
@@ -106,7 +108,16 @@ def repeative_high_importance_feats_search_reg(
         #     # Remain feature_num*(1-replace_rate) high importance features as next candisates.
         #     selected_feats = list(df_perm_importance[:int(feat_len*(1-replace_rate))].index)
         # Remain feature_num*(1-replace_rate) high importance features as next candisates.
-        selected_feats = list(df_perm_importance[:int(feat_len*(1-replace_rate))].index)
+        if (
+            (prev_selected_feats is None or min_loss > df_perm_importance['base_score'].mean())
+            or
+            np.random.rand() < 0.1
+        ):
+            selected_feats = list(df_perm_importance[:int(feat_len*(1-replace_rate))].index)
+            min_loss = df_perm_importance['base_score'].mean()
+        else:
+            selected_feats = copy(prev_selected_feats)
+        prev_selected_feats = copy(selected_feats)
         df_condiate_feats = pd.merge(
             sr_y.rename('target'), df_merged[selected_feats],
             left_index=True, right_index=True,
