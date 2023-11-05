@@ -1,6 +1,5 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 import random
-from datetime import timedelta, date, MINYEAR, MAXYEAR
 
 import pandas as pd
 
@@ -19,6 +18,16 @@ def random_feat_select(
     open_col_name: str = 'open',
     high_col_name: str = 'high',
     low_col_name: str = 'low',
+    # for single/ohlc ts feature creation
+    macd_fastperiod: int = 12,
+    macd_slowperiod: int = 26,
+    macd_signalperiod: int = 9,
+    bb_periods: int = [7, 20, 30, 60],
+    basic_stats_period: int = 14,
+    atr_period: int = 14,
+    return_lags: List[int] = [1, 3, 7, 10, 20, 30, 60],
+    include_deviation: bool = True,
+    reproduce_cols: Optional[List[str]] = None,
 ) -> pd.DataFrame:
     if max_select_tss is not None:
         max_select_tss = min(
@@ -32,17 +41,27 @@ def random_feat_select(
     n_select_tss = random.randint(
         min_select_tss, max_select_tss
     )
-    random_selected_ts_keys = random.sample(
-        set(ohlc_df_dict.keys()) | set(single_ts_sr_dict.keys()), n_select_tss
-    )
-    random_ohlc_dfs = [(key, ohlc_df_dict[key]) for key in random_selected_ts_keys if key in list(ohlc_df_dict.keys())]
-    random_single_ts_srs = [(key, single_ts_sr_dict[key]) for key in random_selected_ts_keys if key in list(single_ts_sr_dict.keys())]
+    if reproduce_cols is None:
+        selected_ts_keys = random.sample(
+            set(ohlc_df_dict.keys()) | set(single_ts_sr_dict.keys()), n_select_tss
+        )
+    else:
+        selected_ts_keys = set(ohlc_df_dict.keys()) | set(single_ts_sr_dict.keys())
+    random_ohlc_dfs = [(key, ohlc_df_dict[key]) for key in selected_ts_keys if key in list(ohlc_df_dict.keys())]
+    random_single_ts_srs = [(key, single_ts_sr_dict[key]) for key in selected_ts_keys if key in list(single_ts_sr_dict.keys())]
 
     ohlc_feat_dfs = [create_ohlc_features(
         sr_close=df[close_col_name],
         sr_open=df[open_col_name],
         sr_high=df[high_col_name],
         sr_low=df[low_col_name],
+        macd_fastperiod=macd_fastperiod,
+        macd_slowperiod=macd_slowperiod,
+        macd_signalperiod=macd_signalperiod,
+        bb_periods=bb_periods,
+        basic_stats_period=basic_stats_period,
+        atr_period=atr_period,
+        return_lags=return_lags,
         col_name_prefix=str(key),
     ) for key, df in random_ohlc_dfs]
     # ohlc_feat_dfs += [
@@ -52,6 +71,14 @@ def random_feat_select(
     single_ts_feat_dfs = [create_single_ts_features(
         sr_ts=sr,
         col_name_prefix=str(key),
+        macd_fastperiod=macd_fastperiod,
+        macd_slowperiod=macd_slowperiod,
+        macd_signalperiod=macd_signalperiod,
+        bb_periods=bb_periods,
+        basic_stats_period=basic_stats_period,
+        atr_period=atr_period,
+        return_lags=return_lags,
+        include_deviation=include_deviation,
     ) for key, sr in random_single_ts_srs]
     # single_ts_feat_dfs += [sr.to_frame(str(key)) for key, sr in random_single_ts_srs]
 
@@ -82,17 +109,28 @@ def random_feat_select(
                 left_index=True, right_index=True
             )
 
-    max_select_feats = min(
-        max_select_feats, len(df_random_feats.columns)
-    )
-    min_select_feats = min(min_select_feats, max_select_feats)
-    n_select_feats = random.randint(
-        min_select_feats, max_select_feats
-    )
+    if reproduce_cols is None:
+        # randomly choose features
+        max_select_feats = min(
+            max_select_feats, len(df_random_feats.columns)
+        )
+        min_select_feats = min(min_select_feats, max_select_feats)
+        n_select_feats = random.randint(
+            min_select_feats, max_select_feats
+        )
 
-    random_feat_cols = random.sample(list(df_random_feats.columns), n_select_feats)
+        random_feat_cols = random.sample(list(df_random_feats.columns), n_select_feats)
+        selected_cols = random_feat_cols
+    else:
+        diff_cols = set(reproduce_cols) - set(list(df_random_feats.columns))
+        if len(diff_cols) > 0:
+            raise ValueError(
+                f'reproduce_cols {diff_cols} not found in created features, '
+                'maybe data or parameters are mismatched.'
+            )
+        selected_cols = reproduce_cols
 
-    return df_random_feats[random_feat_cols]
+    return df_random_feats[selected_cols]
 
 
 def random_time_window_select(

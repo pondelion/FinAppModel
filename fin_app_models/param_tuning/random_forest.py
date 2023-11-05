@@ -19,7 +19,8 @@ class RandomForestRegressionTuner(RMSERegressionOptunaTuner):
         }
         tuning_param = [
             'n_estimators',
-            'max_depth'
+            'max_depth',
+            'max_features',
         ]
         super(RandomForestRegressionTuner, self).__init__(
             fixed_params,
@@ -30,6 +31,7 @@ class RandomForestRegressionTuner(RMSERegressionOptunaTuner):
     @overrides
     def _get_trial_params(self, trial) -> Dict:
         tuning_params = {}
-        tuning_params['n_estimators'] = trial.suggest_int('n_estimators', 2, 20)
-        tuning_params['max_depth'] = int(trial.suggest_loguniform('max_depth', 1, 32))
+        tuning_params['n_estimators'] = trial.suggest_int('n_estimators', 2, 200)
+        tuning_params['max_depth'] = int(trial.suggest_loguniform('max_depth', 1, 96))
+        tuning_params['max_features'] = trial.suggest_float('n_estimators', 0.1, 1.0)
         return tuning_params
